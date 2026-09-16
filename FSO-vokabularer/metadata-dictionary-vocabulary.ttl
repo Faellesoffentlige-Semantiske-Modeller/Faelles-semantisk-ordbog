@@ -1,0 +1,158 @@
+# baseURI: https://data.gov.dk/model/core/metadata-dictionary-vocabulary
+# imports: http://www.w3.org/2004/02/skos/core
+# imports: https://data.gov.dk/model/core/metadata-dictionary-concepts
+
+@prefix mdc: <https://data.gov.dk/model/core/metadata-dictionary-concepts/> .
+@prefix mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://data.gov.dk/model/core/metadata-dictionary-vocabulary>
+  a owl:Ontology ;
+  owl:imports <http://www.w3.org/2004/02/skos/core> ;
+  owl:imports <https://data.gov.dk/model/core/metadata-dictionary-concepts> ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+mdv:DictionaryItem
+  a rdfs:Class ;
+  rdfs:label "Dictionary item" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "ordbogselementer er RDF-elementer optaget i en eller flere semantiske ordbøger med henblik på standardiseret anvendelse i et fællesskab"@da ;
+  skos:prefLabel "Dictionary item"@en ;
+  skos:prefLabel "Ordbogselement"@da ;
+.
+mdv:ElementGraph
+  a rdfs:Class ;
+  rdfs:label "Element graph" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "samling af triples der tilsammen udgør den definerende graf som den blev udtrykt af elementets definerende vokabular"@da ;
+  skos:prefLabel "Element graph"@en ;
+  skos:prefLabel "Elementgraf"@da ;
+.
+mdv:ElementUsageProfile
+  a rdfs:Class ;
+  rdfs:label "Element usage profile" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "anvendelsesprofil der beskriver elementet i relation til en specifik eller abstrakt sammenhæng"@da ;
+  skos:prefLabel "Anvendelsesprofil af elementet"@da ;
+  skos:prefLabel "Element usage profile"@en ;
+.
+mdv:Evaluation
+  a rdfs:Class ;
+  rdfs:label "Evaluation" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "beskrivende vurdering af et muligt eller optaget ordbogselement{@da} " ;
+  skos:prefLabel "Evaluation"@en ;
+  skos:prefLabel "Vurdering"@da ;
+.
+mdv:ItemDescription
+  a owl:DatatypeProperty ;
+  rdfs:label "Item description" ;
+  rdfs:range rdf:langString ;
+  skos:definition "beskrivelse af et ordbogselement der udvider elementets originale beskrivelse for at skabe bedre forståelse for elementets betydning og anvendelse"@da ;
+  skos:prefLabel "elementbeskrivelse"@da ;
+  skos:prefLabel "item description"@en ;
+.
+mdv:SemanticAsset
+  a rdfs:Class ;
+  rdfs:label "Semantic asset" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "aktiv der helt eller delvist indeholder mulige ordbogselementer til optag i en semantisk ordbog."@da ;
+  skos:prefLabel "Semantic asset"@en ;
+  skos:prefLabel "Semantisk aktiv"@da ;
+.
+mdv:SemanticDictionary
+  a rdfs:Class ;
+  rdfs:label "Semantic dictionary" ;
+  rdfs:subClassOf rdfs:Class ;
+  skos:definition "en kurateret samling af ordbogselementer til anvendelse i en given sammenhæng. En semantisk ordbog kan både være bredt favnende i emnevalg eller snævert fokuseret på et specifikt emneområde."@da ;
+  skos:prefLabel "Semantic dictionary"@en ;
+  skos:prefLabel "Semantisk ordbog"@da ;
+.
+mdv:definingGraph
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:DictionaryItem ;
+  rdfs:label "defining graph" ;
+  rdfs:range mdv:ElementGraph ;
+  skos:definition "angiver et ordbogselements definerende graf som defineret i det vokabular elementet blev defineret i"@da ;
+  skos:prefLabel "definerende graf"@da ;
+  skos:prefLabel "defining graph"@en ;
+.
+mdv:describingGraph
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:DictionaryItem ;
+  rdfs:label "describing graph" ;
+  rdfs:range mdv:ElementUsageProfile ;
+  skos:definition "angiver en anvendelsesprofil der beskriver ordbogselementet og dets anvendelse i en specifik sammenhæng"@da ;
+  skos:prefLabel "beskrivende graf"@da ;
+  skos:prefLabel "describing graph"@en ;
+.
+mdv:dictionaryItem
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:SemanticDictionary ;
+  rdfs:label "dictionary item" ;
+  rdfs:range mdv:DictionaryItem ;
+  skos:definition "udpegning af et ordbogselement der er indgår i den semantiske ordbog"@da ;
+  skos:prefLabel "dictionary item"@en ;
+  skos:prefLabel "ordbogselement"@da ;
+.
+mdv:downloadTime
+  a owl:DatatypeProperty ;
+  rdfs:label "download time" ;
+  rdfs:range xsd:dateTime ;
+  skos:prefLabel "download time"@en ;
+  skos:prefLabel "tidspunkt for download"@da ;
+.
+mdv:downloadURL
+  a owl:DatatypeProperty ;
+  rdfs:label "download URL" ;
+  rdfs:range xsd:anyURI ;
+  skos:prefLabel "download URL"@en ;
+  skos:prefLabel "downloadside"@da ;
+.
+mdv:evaluation
+  a owl:ObjectProperty ;
+  rdfs:label "evaluation" ;
+  rdfs:range mdv:Evaluation ;
+  skos:definition "engiver en beskrivende vurdering af ressourcen"@da ;
+  skos:prefLabel "evaluation"@en ;
+  skos:prefLabel "vurdering"@da ;
+.
+mdv:inDictionary
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:DictionaryItem ;
+  rdfs:label "in dictionary" ;
+  rdfs:range mdv:SemanticDictionary ;
+  skos:definition "en semantisk ordbog et ordbogselement er en del af"@da ;
+  skos:prefLabel "i ordbog"@da ;
+  skos:prefLabel "in dictionary"@en ;
+.
+mdv:itemType
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:DictionaryItem ;
+  rdfs:label "item type" ;
+  rdfs:range mdc:SemanticDictionaryItemType ;
+  skos:definition "angiver et ordbogselements type"@da ;
+  skos:prefLabel "elementtype"@da ;
+  skos:prefLabel "item type"@en ;
+.
+mdv:relatedConcept
+  a owl:ObjectProperty ;
+  rdfs:domain mdv:DictionaryItem ;
+  rdfs:label "related concept" ;
+  rdfs:range mdc:DictionaryConcept ;
+  skos:definition "relaterer et ordbogselement til et begreb"@da ;
+  skos:prefLabel "related concept"@en ;
+  skos:prefLabel "relateret begreb"@da ;
+.
+mdv:relatedResource
+  a owl:ObjectProperty ;
+  rdfs:domain mdc:DictionaryConcept ;
+  rdfs:label "related resource" ;
+  skos:definition "relaterer et begreb til en ressource i en semantisk ordbog"@da ;
+  skos:prefLabel "related resource"@en ;
+  skos:prefLabel "relateret ressource"@da ;
+.
