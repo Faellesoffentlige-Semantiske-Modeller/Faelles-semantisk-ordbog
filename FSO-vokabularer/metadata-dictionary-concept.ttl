@@ -1,0 +1,141 @@
+# baseURI: https://data.gov.dk/model/core/metadata-dictionary-concepts
+# imports: http://www.w3.org/2004/02/skos/core
+
+@prefix mdc: <https://data.gov.dk/model/core/metadata-dictionary-concepts/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://data.gov.dk/model/core/metadata-dictionary-concepts>
+  a owl:Ontology ;
+  owl:imports <http://www.w3.org/2004/02/skos/core> ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+mdc:ApplicationProfile
+  a mdc:SemanticAssetType ;
+  rdfs:label "Application profile" ;
+  skos:altLabel "Profil"@da ;
+  skos:altLabel "Profile"@en ;
+  skos:definition "a RDF-based data specification intended to facilitate data exchange in a well-defined context of use. It reuses concepts from one or more semantic data specifications while adding more specificity by identifying mandatory, recommended, and optional elements, addressing specific use needs, and providing recommendations for controlled vocabularies to be used"@en ;
+  skos:definition "en RDF-baseret dataspecifikation, der har til formål at lette dataudvekslingen i en veldefineret anvendelseskontekst. Den genbruger begreber fra en eller flere semantiske dataspecifikationer, mens den tilføjer mere specificitet ved at identificere obligatoriske, anbefalede og valgfrie elementer, adressere særlige anvendelsesbehov og give anbefalinger til kontrollerede ordforråd, der skal bruges"@da ;
+  skos:prefLabel "Anvendelsesprofil"@da ;
+  skos:prefLabel "Application profile"@en ;
+.
+mdc:Class
+  a mdc:SemanticDictionaryItemType ;
+  rdfs:label "Class" ;
+  skos:definition "en gruppe af individer, genstande eller begreber, der deler et eller flere fælles kendetegn"@da ;
+  skos:prefLabel "Class"@en ;
+  skos:prefLabel "Klasse"@da ;
+.
+mdc:Concept
+  a mdc:SemanticDictionaryItemType ;
+  rdfs:label "Concept" ;
+  skos:definition "en mental idé eller en fælles forståelse af de træk, der kendetegner en bestemt slags ting eller fænomener"@da ;
+  skos:prefLabel "Begreb"@da ;
+  skos:prefLabel "Concept"@en ;
+.
+mdc:CurationStatus
+  a owl:Class ;
+  rdfs:label "Curation status" ;
+  rdfs:subClassOf skos:Concept ;
+  skos:prefLabel "Curation status"@en ;
+  skos:prefLabel "Kurateringsstatus"@da ;
+.
+mdc:DataType
+  a mdc:SemanticDictionaryItemType ;
+  rdfs:label "Data type" ;
+  skos:definition "en klassifikation der identificerer og indskrænker hvilke værdier en given mængde data repræsenterer"@da ;
+  skos:prefLabel "Data type"@en ;
+  skos:prefLabel "Datatype"@da ;
+.
+mdc:DictionaryConcept
+  a owl:Class ;
+  rdfs:label "Dictionary concept" ;
+  rdfs:subClassOf skos:Concept ;
+  skos:prefLabel "Dictionary concept"@en ;
+  skos:prefLabel "Ordbogsbegreb"@da ;
+.
+mdc:EvaluationStatus
+  a owl:Class ;
+  rdfs:label "Evaluation status" ;
+  rdfs:subClassOf skos:Concept ;
+  skos:prefLabel "Evaluation status"@en ;
+  skos:prefLabel "Evalueringsstatus"@da ;
+.
+mdc:Property
+  a mdc:SemanticDictionaryItemType ;
+  rdfs:label "Property" ;
+  skos:definition "et prædikat, der udtrykker en kvalitet eller et forhold, som tilskrives et subjekt"@da ;
+  skos:prefLabel "Egenskab"@da ;
+  skos:prefLabel "Property"@en ;
+.
+mdc:SemanticAssetType
+  a owl:Class ;
+  rdfs:label "Ontology type" ;
+  rdfs:subClassOf skos:Concept ;
+  skos:prefLabel "Semantic asset type"@en ;
+  skos:prefLabel "Type af semantisk aktiv"@da ;
+.
+mdc:SemanticDictionaryItemType
+  a owl:Class ;
+  rdfs:label "Semantic item type"@en ;
+  rdfs:label "Type af semantisk ordbogselement"@da ;
+  rdfs:subClassOf skos:Concept ;
+  skos:definition "A semantic dictionary item refers to an individual entity, class, property, or value node in a knowledge graph that maps to a distinct concept"@en ;
+  skos:definition "Et semantisk ordbogselement refererer til en individuel enhed, klasse, egenskab eller værdinode i en vidensgraf, der er knyttet til et bestemt koncept."@da ;
+  skos:prefLabel "Semantic item type"@en ;
+  skos:prefLabel "Type af semantisk element"@da ;
+.
+mdc:Vocabulary
+  a mdc:SemanticAssetType ;
+  rdfs:label "Vocabulary" ;
+  skos:definition "a collection of defined terms, classes, properties, and relations used to describe concepts, data types, and relationships within a specific domain. Vocabularies serve as shared dictionaries that enable machines and humans to exchange data with a common, unambiguous meaning."@en ;
+  skos:definition "en samling af definerede termer, klasser, egenskaber og relationer, der anvendes til at beskrive begreber, datatyper og relationer inden for et specifikt domæne. Vokabularer fungerer som fælles ordbøger, der gør det muligt for maskiner og mennesker at udveksle data med en fælles, entydig betydning."@da ;
+  skos:prefLabel "Vocabulary"@en ;
+  skos:prefLabel "Vokabular"@da ;
+.
+mdc:VocabularyMapping
+  a mdc:SemanticAssetType ;
+  rdfs:label "Vocabulary mapping" ;
+  skos:prefLabel "Vocabulary mapping"@en ;
+  skos:prefLabel "Vokabularmapning"@da ;
+.
+mdc:accepted
+  a mdc:EvaluationStatus ;
+  rdfs:label "accepted" ;
+  skos:prefLabel "accepted"@en ;
+  skos:prefLabel "accepteret"@da ;
+.
+mdc:dissuaded
+  a mdc:EvaluationStatus ;
+  rdfs:label "dissuaded" ;
+  skos:prefLabel "dissuaded"@en ;
+  skos:prefLabel "frarådet"@da ;
+.
+mdc:evaluated
+  a mdc:CurationStatus ;
+  rdfs:label "evaluated" ;
+  skos:prefLabel "evaluated"@en ;
+  skos:prefLabel "evalueret"@da ;
+.
+mdc:evaluationProposed
+  a mdc:CurationStatus ;
+  rdfs:label "evaluation proposed" ;
+  skos:prefLabel "evaluation proposed"@en ;
+  skos:prefLabel "evaluering foreslået"@da ;
+.
+mdc:preferred
+  a mdc:EvaluationStatus ;
+  rdfs:label "preferred" ;
+  skos:prefLabel "foretrukket"@da ;
+  skos:prefLabel "preferred"@en ;
+.
+mdc:underEvaluation
+  a mdc:CurationStatus ;
+  rdfs:label "under evaluation" ;
+  skos:prefLabel "under evaluation"@en ;
+  skos:prefLabel "under evaluering"@da ;
+.
