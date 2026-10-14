@@ -1,0 +1,8 @@
+PREFIX mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+# Create an empty mdv:Evaluation in the default graph and link the item to it.
+INSERT {
+  <$item> mdv:evaluation <$evaluation> .
+  <$evaluation> a mdv:Evaluation .
+}
+WHERE {}

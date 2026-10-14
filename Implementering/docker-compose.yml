@@ -1,0 +1,33 @@
+services:
+  fuseki2:
+    build: ../TripleStore
+    container_name: fuseki2
+    environment:
+      FUSEKI_DATASET_1: Metadataordbog
+    ports:
+      - "3031:3030"
+    volumes:
+      - fuseki-data:/fuseki
+    secrets:
+      - ADMIN_PASSWORD
+
+  ui:
+    build: ./
+    container_name: ordbogen-ui
+    ports:
+      - "5000:5000"
+    environment:
+      FUSEKI_ENDPOINT: http://fuseki2:3030/Metadataordbog/sparql
+      FUSEKI_USER: admin
+      FUSEKI_PASSWORD_FILE: /run/secrets/ADMIN_PASSWORD
+    secrets:
+      - ADMIN_PASSWORD
+    depends_on:
+      - fuseki2
+
+volumes:
+  fuseki-data:
+
+secrets:
+  ADMIN_PASSWORD:
+    file: ../TripleStore/secrets/ADMIN_PASSWORD_PLAIN.txt

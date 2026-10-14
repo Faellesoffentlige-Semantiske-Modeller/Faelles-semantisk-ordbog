@@ -1,0 +1,21 @@
+services:
+  fuseki2:
+    build: ./
+    container_name: fuseki2
+    environment:
+      FUSEKI_DATASET_1: Metadataordbog
+    ports:
+      - "3031:3030"
+    volumes:
+      - fuseki-data:/fuseki
+    secrets:
+      - ADMIN_PASSWORD
+
+volumes:
+  fuseki-data:
+
+secrets:
+  ADMIN_PASSWORD:
+    file: ./secrets/ADMIN_PASSWORD_PLAIN.txt
+
+

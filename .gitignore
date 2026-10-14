@@ -1,0 +1,89 @@
+# ---------------------------------------------------------------------------
+# Secrets - this repo is public, nothing in here may ever be committed.
+# Real values live only on the developer's machine / deployment target.
+# Commit a *.example template instead (see Implementering/**/secrets/).
+# ---------------------------------------------------------------------------
+
+# Docker secret files (e.g. Implementering/TripleStore/secrets/ADMIN_PASSWORD_PLAIN.txt).
+# "secrets/*" (not "secrets/") so the negations below can re-include files.
+**/secrets/*
+!**/secrets/*.example
+!**/secrets/.gitattributes
+*_PLAIN.txt
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+
+# Keys, certificates, credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+credentials.json
+*.secret
+*.secrets
+
+# Fuseki: the live shiro.ini is generated at container start from the
+# template (with the real password hash) - never commit a generated one.
+**/fuseki-data/
+**/databases/
+**/run/
+**/logs/
+*.tdb
+*.lock
+
+# ---------------------------------------------------------------------------
+# Python (Implementering/Ordbogen)
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# ---------------------------------------------------------------------------
+# Docker
+# ---------------------------------------------------------------------------
+docker-compose.override.yml
+compose.override.yml
+
+# ---------------------------------------------------------------------------
+# Editors / OS / Office
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office lock/temp files (the repo holds .docx/.pptx/.xlsx material)
+~$*
+.~lock.*#
+
+# Claude Code local settings (keep CLAUDE.md shared, settings personal)
+.claude/settings.local.json
+
+# Misc
+*.log
+*.tmp
+*.bak

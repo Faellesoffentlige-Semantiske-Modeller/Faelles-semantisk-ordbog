@@ -1,0 +1,47 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+INSERT {
+  GRAPH ?elementGraph {
+    ?s ?p ?o .
+  }
+  # DictionaryItem lives in the default graph (no GRAPH wrapper).
+  ?dictItem a mdv:DictionaryItem ;
+    mdv:definingGraph ?elementGraph ;
+    mdv:representsElement ?s ;
+    mdv:fromVocabulary <$source_graph> .
+}
+WHERE {
+  # All triples for each element
+  GRAPH <$source_graph> {
+    ?s ?p ?o .
+    { ?s rdf:type rdf:Property }          UNION
+    { ?s rdf:type owl:DatatypeProperty }   UNION
+    { ?s rdf:type owl:FunctionalProperty } UNION
+    { ?s rdf:type owl:ObjectProperty }     UNION
+    { ?s rdf:type owl:DeprecatedProperty } UNION
+    { ?s rdf:type owl:AnnotationProperty }
+    FILTER (STRSTARTS(STR(?s), "$ontology"))
+  }
+
+  # Generate exactly one element graph IRI and one dictionary item IRI per
+  # distinct element.
+  {
+    SELECT ?s
+      (IRI(CONCAT("$element_base", STRUUID())) AS ?elementGraph)
+      (IRI(CONCAT("$item_base", STRUUID())) AS ?dictItem)
+    WHERE {
+      GRAPH <$source_graph> {
+        { ?s rdf:type rdf:Property }          UNION
+        { ?s rdf:type owl:DatatypeProperty }   UNION
+        { ?s rdf:type owl:FunctionalProperty } UNION
+        { ?s rdf:type owl:ObjectProperty }     UNION
+        { ?s rdf:type owl:DeprecatedProperty } UNION
+        { ?s rdf:type owl:AnnotationProperty }
+        FILTER (STRSTARTS(STR(?s), "$ontology"))
+      }
+    }
+    GROUP BY ?s
+  }
+}

@@ -1,0 +1,91 @@
+{% from "_back.html" import back_link %}
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dictionary item</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    {{ back_link(url_for('items.index')) }}
+    <h1>Dictionary item</h1>
+    <p class="endpoint">UUID: <code>{{ item_uuid }}</code></p>
+
+    {% if error %}
+      <p class="error">Fejl: {{ error }}</p>
+    {% endif %}
+
+    {% if not item %}
+      {% if not error %}
+        <p class="error">Ingen dictionary item fundet for <code>{{ item_iri }}</code>.</p>
+      {% endif %}
+    {% else %}
+      <table>
+        <tbody>
+          <tr><th>Item</th><td><code>{{ item.iri }}</code></td></tr>
+          <tr><th>Element</th><td><code>{{ item.element }}</code></td></tr>
+          <tr><th>Vokabular</th><td><code>{{ item.vocabulary }}</code></td></tr>
+          <tr><th>Defining graph</th><td><code>{{ item.defining_graph }}</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Evaluering</h2>
+      {% set evaluation = item.evaluation %}
+      {% if evaluation %}
+        <p class="endpoint">Evaluation: <code>{{ evaluation.iri }}</code></p>
+        <form method="post">
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="evaluation" value="{{ evaluation.iri }}">
+
+          <div class="form-group">
+            <label class="form-label" for="comment">Note / kommentar</label>
+            <textarea class="form-input" id="comment" name="comment" rows="4">{{ evaluation.comment }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="comment_lang">Sprog for note</label>
+            <select class="form-select" id="comment_lang" name="comment_lang">
+              <option value="da" {{ 'selected' if evaluation.comment_lang == 'da' }}>Dansk (da)</option>
+              <option value="en" {{ 'selected' if evaluation.comment_lang == 'en' }}>English (en)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="creator">Evaluator</label>
+            <input type="text" class="form-input" id="creator" name="creator" value="{{ evaluation.creator }}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="date">Dato</label>
+            <input type="date" class="form-input" id="date" name="date" value="{{ evaluation.date }}">
+          </div>
+
+          <button type="submit" class="button button-primary">Gem evaluering</button>
+        </form>
+      {% else %}
+        <p>Ingen evaluering endnu.</p>
+        <form method="post">
+          <input type="hidden" name="action" value="add">
+          <button type="submit" class="button button-secondary">Tilføj evaluering</button>
+        </form>
+      {% endif %}
+
+      <h2>Triples fra defining graph</h2>
+      <p>{{ item.count }} triple(s).</p>
+      <table>
+        <thead>
+          <tr><th>Subject</th><th>Predicate</th><th>Object</th></tr>
+        </thead>
+        <tbody>
+          {% for s, p, o in item.triples %}
+            <tr><td>{{ s }}</td><td>{{ p }}</td><td>{{ o }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </main>
+</body>
+</html>

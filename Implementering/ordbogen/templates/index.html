@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Metadataordbog UI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    <h1>Metadataordbog</h1>
+    <p>Simpel UI til Fuseki-datasettet <code>Metadataordbog</code>.</p>
+    <p class="endpoint">Endpoint: <code>{{ endpoint }}</code></p>
+    <ul class="nav">
+      <li><a href="{{ url_for('main.default_graph') }}">Alle triples i default-graf → /default</a></li>
+      <li><a href="{{ url_for('main.named_graphs') }}">Navne på alle named graphs → /graph</a></li>
+      <li><a href="{{ url_for('items.index') }}">Dictionary items som kort → /items</a></li>
+      <li><a href="{{ url_for('upload.index') }}">Upload TTL til ny named graph → /upload</a></li>
+    </ul>
+  </main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+PREFIX mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+# Look up a DictionaryItem (default graph) and pull the element's triples from
+# its related defining graph (the element graph). Metadata columns repeat per
+# element triple; the GRAPH block is OPTIONAL so an empty element graph still
+# returns the item's references.
+SELECT ?element ?definingGraph ?vocabulary ?s ?p ?o
+WHERE {
+  <$item> mdv:representsElement ?element ;
+          mdv:definingGraph ?definingGraph ;
+          mdv:fromVocabulary ?vocabulary .
+  OPTIONAL { GRAPH ?definingGraph { ?s ?p ?o } }
+}

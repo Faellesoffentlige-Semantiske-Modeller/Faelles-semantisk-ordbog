@@ -1,0 +1,10 @@
+{% macro back_link(href) %}
+<div>
+  <a href="{{ href }}" class="back-link"
+     onclick="if (history.length > 1) { history.back(); return false; } return true;">
+    <svg class="icon-svg" focusable="false" aria-hidden="true">
+      <use href="{{ url_for('static', filename='dkfds/img/all-svg-icons.svg') }}#chevron-left"></use>
+    </svg>Tilbage
+  </a>
+</div>
+{% endmacro %}

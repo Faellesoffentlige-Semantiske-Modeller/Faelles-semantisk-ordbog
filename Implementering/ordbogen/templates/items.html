@@ -1,0 +1,43 @@
+{% from "_back.html" import back_link %}
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dictionary items</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    {{ back_link(url_for('main.index')) }}
+    <h1>Dictionary items</h1>
+
+    {% if error %}
+      <div class="alert alert-error" role="alert">
+        <div class="alert-body"><p class="alert-text">{{ error }}</p></div>
+      </div>
+    {% else %}
+      <p>{{ count }} item(s).</p>
+      <ul class="row card-row">
+        {% for card in cards %}
+          <li class="col-12 col-sm-6 col-md-4">
+            <a class="card" href="{{ url_for('items.detail', item_uuid=card.uuid) }}">
+              <div class="card-content">
+                <span class="card-subheading">{{ card.vocabulary }}</span>
+                <h2 class="card-heading">{{ card.label }}</h2>
+                <p>{{ card.element }}</p>
+              </div>
+              <svg class="icon-svg card-icon" focusable="false" aria-hidden="true">
+                <use href="{{ url_for('static', filename='dkfds/img/all-svg-icons.svg') }}#arrow-forward"></use>
+              </svg>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </main>
+
+  <script src="{{ url_for('static', filename='dkfds/js/dkfds.js') }}"></script>
+</body>
+</html>

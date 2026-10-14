@@ -1,0 +1,13 @@
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dct:  <http://purl.org/dc/terms/>
+
+# The evaluation linked from a dictionary item (default graph) and its fields.
+# Zero rows means the item has no evaluation yet.
+SELECT ?evaluation ?comment ?creator ?date
+WHERE {
+  <$item> mdv:evaluation ?evaluation .
+  OPTIONAL { ?evaluation rdfs:comment ?comment }
+  OPTIONAL { ?evaluation dct:creator ?creator }
+  OPTIONAL { ?evaluation dct:date    ?date }
+}

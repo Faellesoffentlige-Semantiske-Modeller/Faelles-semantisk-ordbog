@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Never commit the Fuseki admin password.
+secrets/
+*_PLAIN.txt

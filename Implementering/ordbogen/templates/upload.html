@@ -1,0 +1,76 @@
+{% from "_back.html" import back_link %}
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload TTL</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    {{ back_link(url_for('main.index')) }}
+    <h1>Upload TTL til ny named graph</h1>
+
+    {% if error %}
+      <div class="alert alert-error" role="alert">
+        <div class="alert-body">
+          <p class="alert-heading">Der opstod en fejl</p>
+          <p class="alert-text">{{ error }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if result %}
+      <div class="alert alert-success" role="alert">
+        <div class="alert-body">
+          <p class="alert-heading">Upload gennemført</p>
+          <p class="alert-text">
+            {{ result.triple_count }} triple(s) blev indsat i den nye named graph:<br>
+            <code>{{ result.graph_uri }}</code><br>
+            Ontologi anvendt til opsplitning: <code>{{ result.ontology }}</code>
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      <div class="form-group file-input">
+        <label class="form-label" for="form-fileinput">Vedhæft TTL-fil</label>
+        <span class="form-hint" id="fileinput-hint">
+          Accepterer Turtle-filer (.ttl). Du kan i stedet indsætte TTL-tekst nedenfor.
+        </span>
+        <input type="file" id="form-fileinput" name="file"
+               accept=".ttl,text/turtle" aria-describedby="fileinput-hint">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ontology">Ontologi (valgfri)</label>
+        <span class="form-hint" id="ontology-hint">
+          Namespace-URI der bruges til at opsplitte elementer. Udfyldes automatisk
+          fra filens <code>owl:Ontology</code> hvis feltet står tomt. Angives her
+          for at overskrive, fx <code>http://xmlns.com/foaf/0.1/</code>.
+        </span>
+        <input type="text" class="form-input" id="ontology" name="ontology"
+               aria-describedby="ontology-hint"
+               placeholder="http://www.w3.org/ns/prov#">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ttl_text">…eller indsæt TTL-tekst</label>
+        <span class="form-hint" id="ttltext-hint">
+          Fuld Turtle-tekst. Bruges hvis der ikke er valgt en fil.
+        </span>
+        <textarea class="form-input" id="ttl_text" name="ttl_text" rows="12"
+                  aria-describedby="ttltext-hint"
+                  placeholder="@prefix ex: <http://example.org/> .&#10;ex:s ex:p ex:o ."></textarea>
+      </div>
+
+      <button type="submit" class="button button-primary">Upload</button>
+    </form>
+  </main>
+
+  <script src="{{ url_for('static', filename='dkfds/js/dkfds.js') }}"></script>
+</body>
+</html>

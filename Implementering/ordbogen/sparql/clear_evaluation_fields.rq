@@ -1,0 +1,14 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dct:  <http://purl.org/dc/terms/>
+
+# Remove the editable fields of an evaluation before re-inserting new values.
+DELETE {
+  <$evaluation> rdfs:comment ?c .
+  <$evaluation> dct:creator  ?cr .
+  <$evaluation> dct:date     ?d .
+}
+WHERE {
+  OPTIONAL { <$evaluation> rdfs:comment ?c }
+  OPTIONAL { <$evaluation> dct:creator  ?cr }
+  OPTIONAL { <$evaluation> dct:date     ?d }
+}

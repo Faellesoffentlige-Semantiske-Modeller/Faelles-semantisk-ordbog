@@ -1,0 +1,27 @@
+{% from "_back.html" import back_link %}
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Named graphs</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    {{ back_link(url_for('main.index')) }}
+    <h1>Named graphs</h1>
+    {% if error %}
+      <p class="error">Fejl: {{ error }}</p>
+    {% else %}
+      <p>{{ count }} named graph(s).</p>
+      <ul>
+        {% for g in graphs %}
+          <li><code>{{ g }}</code></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </main>
+</body>
+</html>

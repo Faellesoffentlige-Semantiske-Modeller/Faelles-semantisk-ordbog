@@ -1,0 +1,3 @@
+# The name of every named graph that holds at least one triple.
+SELECT DISTINCT ?g
+WHERE { GRAPH ?g { ?s ?p ?o } }
