@@ -19,22 +19,21 @@
       </div>
     {% else %}
       <p>{{ count }} item(s).</p>
-      <ul class="row card-row">
-        {% for card in cards %}
-          <li class="col-12 col-sm-6 col-md-4">
-            <a class="card" href="{{ url_for('items.detail', item_uuid=card.uuid) }}">
-              <div class="card-content">
-                <span class="card-subheading">{{ card.vocabulary }}</span>
-                <h2 class="card-heading">{{ card.label }}</h2>
-                <p>{{ card.element }}</p>
-              </div>
-              <svg class="icon-svg card-icon" focusable="false" aria-hidden="true">
-                <use href="{{ url_for('static', filename='dkfds/img/all-svg-icons.svg') }}#arrow-forward"></use>
-              </svg>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
+      <table class="items-table">
+        <thead>
+          <tr><th scope="col">Navn</th><th scope="col">Element</th></tr>
+        </thead>
+        <tbody>
+          {% for card in cards %}
+            <tr class="clickable-row">
+              <td class="item-label">
+                <a href="{{ url_for('items.detail', item_uuid=card.uuid) }}">{{ card.label }}</a>
+              </td>
+              <td>{{ card.element }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     {% endif %}
   </main>
 

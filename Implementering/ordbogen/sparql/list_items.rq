@@ -1,11 +1,18 @@
-PREFIX mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-# All dictionary items (default graph) with the element they represent and the
-# vocabulary they come from. One card per item.
-SELECT ?item ?element ?vocabulary
+# All dictionary items (default graph) with the element they represent, the
+# vocabulary they come from, and the element's rdfs:label(s) from its defining
+# graph. An item repeats once per label (one per language); one row per item
+# when it has none. The repository picks the preferred language.
+SELECT ?item ?element ?vocabulary ?label
 WHERE {
   ?item a mdv:DictionaryItem ;
         mdv:representsElement ?element ;
         mdv:fromVocabulary ?vocabulary .
+  OPTIONAL {
+    ?item mdv:definingGraph ?definingGraph .
+    GRAPH ?definingGraph { ?element rdfs:label ?label }
+  }
 }
 ORDER BY ?element

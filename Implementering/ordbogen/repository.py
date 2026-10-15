@@ -17,9 +17,22 @@ from .models import (
     Evaluation,
     EvaluationSubmission,
     ItemCard,
+    LABEL_PREDICATE,
+    Term,
     Triple,
+    build_facts,
+    prefer_language,
 )
 from .store import load_sparql, query_store, update_store
+
+
+def _term(node) -> Term:
+    """Wrap an rdflib node from a query result for display."""
+    return Term(
+        str(node),
+        lang=getattr(node, "language", None) or "",
+        is_iri=isinstance(node, URIRef),
+    )
 
 
 class DictionaryRepository:
@@ -63,39 +76,53 @@ class DictionaryRepository:
     def list_items(self) -> list[ItemCard]:
         """All dictionary items whose IRI sits under the configured item base."""
         base = self.config.item_base
-        cards = []
+        # An item comes back once per rdfs:label (one per language).
+        rows_by_item: dict[str, list] = {}
         for row in self.reader.query(load_sparql("list_items.rq")):
             item_iri = str(row.item)
-            if not item_iri.startswith(base):
-                continue
+            if item_iri.startswith(base):
+                rows_by_item.setdefault(item_iri, []).append(row)
+
+        cards = []
+        for item_iri, rows in rows_by_item.items():
+            labels = [_term(row.label) for row in rows if row.label is not None]
+            preferred = prefer_language(labels)
             cards.append(
                 ItemCard(
                     uuid=item_iri[len(base):],
-                    element=str(row.element),
-                    vocabulary=str(row.vocabulary),
+                    element=str(rows[0].element),
+                    vocabulary=str(rows[0].vocabulary),
+                    name=preferred[0].value if preferred else "",
                 )
             )
-        return cards
+        return sorted(cards, key=lambda card: card.label.casefold())
 
     def get_item(self, item_uuid: str) -> DictionaryItem | None:
-        """Return one dictionary item with its element triples, or None."""
+        """Return one dictionary item described for display, or None."""
         item_iri = self.item_iri(item_uuid)
         rows = list(self.reader.query(load_sparql("item_info.rq", item=item_iri)))
         if not rows:
             return None
 
         last = rows[-1]
+        element = str(last.element)
+        # The defining graph holds the element's own triples; keep just those.
+        statements = [
+            (str(row.p), _term(row.o))
+            for row in rows
+            if row.s is not None and str(row.s) == element
+        ]
+        names = prefer_language(
+            [term for predicate, term in statements if predicate == LABEL_PREDICATE]
+        )
         item = DictionaryItem(
             iri=item_iri,
             uuid=item_uuid,
-            element=str(last.element),
+            element=element,
             defining_graph=str(last.definingGraph),
             vocabulary=str(last.vocabulary),
-            triples=[
-                (str(row.s), str(row.p), str(row.o))
-                for row in rows
-                if row.s is not None
-            ],
+            name=names[0].value if names else "",
+            facts=build_facts(statements),
         )
         item.evaluation = self.read_evaluation(item_iri)
         return item

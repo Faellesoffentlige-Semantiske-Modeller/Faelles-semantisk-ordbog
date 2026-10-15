@@ -1,0 +1,3 @@
+{% macro form_error_message(input_id, message, extra_class="") -%}
+<span class="form-error-message{% if extra_class %} {{ extra_class }}{% endif %}" id="{{ input_id }}-error"><span class="sr-only">Fejl: </span>{{ message }}</span>
+{%- endmacro %}

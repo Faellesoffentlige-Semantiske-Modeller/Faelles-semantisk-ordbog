@@ -1,60 +1,48 @@
 {% from "_back.html" import back_link %}
+{% from "_toast.html" import toast_container, toast %}
+{% from "_form_error.html" import form_error_message %}
+{% set ttl_error = errors.get(ttl_field) %}
+{% set namespace_error = errors.get(namespace_field) %}
 <!doctype html>
 <html lang="da">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Upload TTL</title>
+  <title>Upload RDF Vokabular</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <main class="container">
+    {% call toast_container() %}
+      {% if error %}
+        {{ toast("error", "Der opstod en fejl", error) }}
+      {% endif %}
+      {% if result %}
+        {% call toast("success", "Upload gennemført") %}
+          {{ result.triple_count }} triple(s) blev indsat i den nye named graph
+          <code>{{ result.graph_uri }}</code>.
+          Namespace anvendt til opsplitning: <code>{{ result.ontology }}</code>
+        {% endcall %}
+      {% endif %}
+    {% endcall %}
+
     {{ back_link(url_for('main.index')) }}
-    <h1>Upload TTL til ny named graph</h1>
+    <h1>Upload RDF Vokabular til metadata ordbogen</h1>
 
-    {% if error %}
-      <div class="alert alert-error" role="alert">
-        <div class="alert-body">
-          <p class="alert-heading">Der opstod en fejl</p>
-          <p class="alert-text">{{ error }}</p>
-        </div>
-      </div>
-    {% endif %}
-
-    {% if result %}
-      <div class="alert alert-success" role="alert">
-        <div class="alert-body">
-          <p class="alert-heading">Upload gennemført</p>
-          <p class="alert-text">
-            {{ result.triple_count }} triple(s) blev indsat i den nye named graph:<br>
-            <code>{{ result.graph_uri }}</code><br>
-            Ontologi anvendt til opsplitning: <code>{{ result.ontology }}</code>
-          </p>
-        </div>
-      </div>
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data">
-      <div class="form-group file-input">
-        <label class="form-label" for="form-fileinput">Vedhæft TTL-fil</label>
+    {# novalidate: errors are shown with the design system's field errors, by
+       the server or by the script below, not by the browser's own popups. #}
+    <form method="post" enctype="multipart/form-data" id="upload-form" novalidate>
+      <div class="form-group file-input{% if ttl_error %} form-error{% endif %}">
+        <label class="form-label" for="{{ ttl_field }}">Vedhæft TTL-fil</label>
         <span class="form-hint" id="fileinput-hint">
           Accepterer Turtle-filer (.ttl). Du kan i stedet indsætte TTL-tekst nedenfor.
         </span>
-        <input type="file" id="form-fileinput" name="file"
-               accept=".ttl,text/turtle" aria-describedby="fileinput-hint">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="ontology">Ontologi (valgfri)</label>
-        <span class="form-hint" id="ontology-hint">
-          Namespace-URI der bruges til at opsplitte elementer. Udfyldes automatisk
-          fra filens <code>owl:Ontology</code> hvis feltet står tomt. Angives her
-          for at overskrive, fx <code>http://xmlns.com/foaf/0.1/</code>.
-        </span>
-        <input type="text" class="form-input" id="ontology" name="ontology"
-               aria-describedby="ontology-hint"
-               placeholder="http://www.w3.org/ns/prov#">
+        {% if ttl_error %}{{ form_error_message(ttl_field, ttl_error, "mb-3") }}{% endif %}
+        <input type="file" id="{{ ttl_field }}" name="file"
+               accept=".ttl,text/turtle"
+               {% if ttl_error %}aria-invalid="true"{% endif %}
+               aria-describedby="fileinput-hint{% if ttl_error %} {{ ttl_field }}-error{% endif %}">
       </div>
 
       <div class="form-group">
@@ -64,13 +52,176 @@
         </span>
         <textarea class="form-input" id="ttl_text" name="ttl_text" rows="12"
                   aria-describedby="ttltext-hint"
-                  placeholder="@prefix ex: <http://example.org/> .&#10;ex:s ex:p ex:o ."></textarea>
+                  placeholder="@prefix ex: <http://example.org/> .&#10;ex:s ex:p ex:o .">{{ ttl_text }}</textarea>
       </div>
 
-      <button type="submit" class="button button-primary">Upload</button>
+      <div class="form-group{% if namespace_error %} form-error{% endif %}">
+        <label class="form-label" for="{{ namespace_field }}">Namespace</label>
+        <span class="form-hint" id="ontology-hint">
+          Påkrævet. Namespace-URI der bruges til at opsplitte elementer. Tryk på
+          <em>Gæt namespace</em> for at få et forslag fra filens
+          <code>owl:Ontology</code>, og ret det om nødvendigt, fx
+          <code>http://xmlns.com/foaf/0.1/</code>.
+        </span>
+        {% if namespace_error %}{{ form_error_message(namespace_field, namespace_error) }}{% endif %}
+        <div class="namespace-row">
+          <input type="text" class="form-input" id="{{ namespace_field }}" name="ontology"
+                 required value="{{ ontology }}"
+                 {% if namespace_error %}aria-invalid="true"{% endif %}
+                 aria-describedby="ontology-hint{% if namespace_error %} {{ namespace_field }}-error{% endif %} ontology-status"
+                 placeholder="http://www.w3.org/ns/prov#">
+          <button type="button" class="button button-secondary" id="guess-namespace"
+                  data-guess-url="{{ url_for('upload.guess') }}">Gæt namespace</button>
+        </div>
+        <p class="form-hint" id="ontology-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <p class="form-hint">
+        Intet gemmes i triplestore, før du trykker <em>Fuldfør upload</em>.
+      </p>
+      <button type="submit" class="button button-primary">Fuldfør upload</button>
     </form>
   </main>
 
   <script src="{{ url_for('static', filename='dkfds/js/dkfds.js') }}"></script>
+  <script src="{{ url_for('static', filename='toast.js') }}"></script>
+  <script>
+    (function () {
+      var MESSAGES = {{ {"missingTtl": missing_ttl, "missingNamespace": missing_namespace}|tojson }};
+
+      var form = document.getElementById("upload-form");
+      var guessButton = document.getElementById("guess-namespace");
+      var fileInput = form.elements["file"];
+      var textInput = form.elements["ttl_text"];
+      var namespaceInput = form.elements["ontology"];
+      var status = document.getElementById("ontology-status");
+      var fields = [fileInput, namespaceInput]; // in form order
+
+      // --- field errors (https://designsystem.dk/komponenter/fejlmeddelelser/) ---
+      // The error message element is the source of truth, so errors rendered
+      // by the server and errors added here behave the same.
+
+      function errorElement(input) {
+        return document.getElementById(input.id + "-error");
+      }
+
+      function describedBy(input) {
+        return (input.getAttribute("aria-describedby") || "").split(" ").filter(Boolean);
+      }
+
+      function clearFieldError(input) {
+        var message = errorElement(input);
+        if (message) { message.remove(); }
+        input.closest(".form-group").classList.remove("form-error");
+        input.removeAttribute("aria-invalid");
+        input.setAttribute("aria-describedby", describedBy(input)
+          .filter(function (id) { return id !== input.id + "-error"; }).join(" "));
+      }
+
+      function setFieldError(input, text) {
+        clearFieldError(input);
+        var group = input.closest(".form-group");
+        var message = document.createElement("span");
+        message.className = "form-error-message" + (input.type === "file" ? " mb-3" : "");
+        message.id = input.id + "-error";
+        var hidden = document.createElement("span");
+        hidden.className = "sr-only";
+        hidden.textContent = "Fejl: ";
+        message.appendChild(hidden);
+        message.appendChild(document.createTextNode(text));
+        group.querySelector(".form-hint").insertAdjacentElement("afterend", message);
+
+        group.classList.add("form-error");
+        input.setAttribute("aria-invalid", "true");
+        var ids = describedBy(input);
+        ids.splice(1, 0, message.id); // directly after the hint
+        input.setAttribute("aria-describedby", ids.join(" "));
+      }
+
+      // Move focus to the first field with an error.
+      function focusFirstError() {
+        for (var i = 0; i < fields.length; i++) {
+          if (errorElement(fields[i])) { fields[i].focus(); return; }
+        }
+      }
+
+      // --- validation ---
+
+      function hasTurtle() {
+        return fileInput.files.length > 0 || textInput.value.trim() !== "";
+      }
+
+      function hasNamespace() {
+        return namespaceInput.value.trim() !== "";
+      }
+
+      form.addEventListener("submit", function (event) {
+        clearFieldError(fileInput);
+        clearFieldError(namespaceInput);
+        if (!hasTurtle()) { setFieldError(fileInput, MESSAGES.missingTtl); }
+        if (!hasNamespace()) { setFieldError(namespaceInput, MESSAGES.missingNamespace); }
+        if (errorElement(fileInput) || errorElement(namespaceInput)) {
+          event.preventDefault();
+          focusFirstError();
+        }
+      });
+
+      // Take an error away as soon as the user has fixed it.
+      function fixed(input, isValid) {
+        if (isValid() && errorElement(input)) { clearFieldError(input); }
+      }
+      fileInput.addEventListener("change", function () { fixed(fileInput, hasTurtle); });
+      textInput.addEventListener("input", function () { fixed(fileInput, hasTurtle); });
+      namespaceInput.addEventListener("input", function () { fixed(namespaceInput, hasNamespace); });
+
+      // --- "Gæt namespace": the guess endpoint only parses; nothing is stored
+      // until the form itself is submitted. ---
+
+      guessButton.addEventListener("click", function () {
+        if (!hasTurtle()) {
+          setFieldError(fileInput, MESSAGES.missingTtl);
+          focusFirstError();
+          return;
+        }
+
+        var data = new FormData();
+        var file = fileInput.files[0];
+        if (file) { data.append("file", file); }
+        data.append("ttl_text", textInput.value);
+
+        guessButton.disabled = true;
+        status.textContent = "Gætter namespace…";
+
+        fetch(guessButton.dataset.guessUrl, { method: "POST", body: data })
+          .then(function (response) {
+            return response.json().then(function (body) {
+              return { ok: response.ok, body: body };
+            });
+          })
+          .then(function (reply) {
+            if (!reply.ok) {
+              status.textContent = "";
+              setFieldError(fileInput, reply.body.error);
+              focusFirstError();
+              return;
+            }
+            clearFieldError(fileInput);
+            if (reply.body.namespace) {
+              namespaceInput.value = reply.body.namespace;
+              clearFieldError(namespaceInput);
+              status.textContent = "Foreslået namespace fra owl:Ontology. " +
+                "Ret feltet hvis nødvendigt, og tryk derefter Fuldfør upload.";
+            } else {
+              status.textContent = "Kunne ikke finde en owl:Ontology. " +
+                "Angiv namespace manuelt.";
+            }
+          })
+          .catch(function () {
+            status.textContent = "Kunne ikke gætte namespace. Prøv igen.";
+          })
+          .then(function () { guessButton.disabled = false; });
+      });
+    })();
+  </script>
 </body>
 </html>

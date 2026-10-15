@@ -59,3 +59,48 @@ th, td {
 th { background: #f0f3f6; position: sticky; top: 0; }
 
 tbody tr:nth-child(even) { background: #f7f9fb; }
+
+.namespace-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.namespace-row .form-input { flex: 1; max-width: none; }
+
+.namespace-row .button { margin-top: 0; white-space: nowrap; }
+
+/* dkfds only reddens inputs that are direct children of .form-error */
+.form-group.form-error .namespace-row .form-input {
+  border: 2px solid #CC0000;
+  padding: calc(8px - 2px) calc(16px - 2px);
+}
+
+/* /items: whole row is clickable via a link stretched over the row */
+.items-table .clickable-row { position: relative; cursor: pointer; }
+
+.items-table .clickable-row:hover,
+.items-table .clickable-row:focus-within { background: #e3edf7; }
+
+/* dkfds sets html to 62.5%, so 1rem = 10px and body text is 1.6rem */
+.items-table, .facts-table { font-size: 1.6rem; }
+
+.items-table th, .facts-table th { font-size: 1.6rem; }
+
+.items-table th, .items-table td, .facts-table th, .facts-table td { padding: 0.8rem 1.2rem; }
+
+.items-table .item-label { font-size: 2rem; font-weight: 600; word-break: normal; }
+
+.items-table .item-label a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* /item/<id>: heading-per-row table of the element's facts */
+.facts-table th {
+  position: static;
+  width: 18rem;
+  white-space: nowrap;
+  word-break: normal;
+}

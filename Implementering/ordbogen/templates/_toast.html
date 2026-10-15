@@ -1,0 +1,30 @@
+{% set toast_labels = {
+  "success": "Succes:",
+  "warning": "Advarsel:",
+  "error": "Fejl:",
+  "info": "Information:",
+} %}
+
+{% macro toast_container() %}
+<div class="toast-container" aria-live="assertive" aria-atomic="false" aria-relevant="additions">
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro toast(variant, heading, text="", id="") %}
+{% set heading_id = id or "notification-" ~ variant ~ "-heading" %}
+{# Starts hidden: toast.js shows it, which runs the show animation. #}
+<div class="toast toast-{{ variant }} hide" aria-atomic="true">
+  <div class="toast-icon"></div>
+  <div class="toast-message">
+    <p>
+      <span class="sr-only">{{ toast_labels[variant] }}</span>
+      <strong id="{{ heading_id }}">{{ heading }}</strong>
+    </p>
+    {% if text or caller %}
+      <p>{% if caller %}{{ caller() }}{% else %}{{ text }}{% endif %}</p>
+    {% endif %}
+    <button class="toast-close" aria-describedby="{{ heading_id }}">Luk</button>
+  </div>
+</div>
+{% endmacro %}

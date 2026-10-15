@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from rdflib import Graph
@@ -26,29 +27,57 @@ def detect_ontology(graph: Graph) -> str | None:
     return None
 
 
+class InvalidTurtle(ValueError):
+    """The submitted text is not valid Turtle. The message is shown to the user."""
+
+
+def parse_turtle(ttl_text: str) -> Graph:
+    """Parse Turtle into a graph.
+
+    Raises:
+        InvalidTurtle with a user-facing message if the text cannot be parsed.
+    """
+    graph = Graph()
+    try:
+        graph.parse(data=ttl_text, format="turtle")
+    except Exception as exc:  # noqa: BLE001 - rdflib raises several parse error types
+        line = re.search(r"line (\d+)", str(exc))
+        where = f" (fejl ved linje {line.group(1)})" if line else ""
+        raise InvalidTurtle(
+            f"TTL-indholdet er ikke gyldig Turtle{where}. "
+            "Ret filen eller teksten, og prøv igen."
+        ) from exc
+    return graph
+
+
+def guess_namespace(ttl_text: str) -> str | None:
+    """Suggest the ontology namespace for Turtle without storing anything.
+
+    Raises:
+        InvalidTurtle if the Turtle cannot be parsed.
+    """
+    return detect_ontology(parse_turtle(ttl_text))
+
+
 def ingest_turtle(
     repository: DictionaryRepository,
     ttl_text: str,
-    ontology_override: str = "",
+    ontology: str,
 ) -> IngestResult:
     """Parse Turtle, load it into a new source graph, and split its elements.
 
-    The namespace used to select elements is the explicit override if given,
-    otherwise the uploaded file's own ``owl:Ontology`` declaration.
+    ``ontology`` is the namespace used to select elements; the editor has
+    confirmed it (typically after :func:`guess_namespace`).
 
     Raises:
-        rdflib parse errors if the Turtle is invalid, or ValueError if no
-        ontology namespace can be resolved.
+        ValueError if the namespace is empty, or InvalidTurtle if the Turtle
+        cannot be parsed.
     """
-    local = Graph()
-    local.parse(data=ttl_text, format="turtle")
-
-    ontology = ontology_override or detect_ontology(local)
+    ontology = ontology.strip()
     if not ontology:
-        raise ValueError(
-            "Kunne ikke finde en owl:Ontology i TTL-indholdet, og der er ikke "
-            "angivet en ontologi. Angiv en ontologi-URI i feltet ovenfor."
-        )
+        raise ValueError("Namespace mangler.")
+
+    local = parse_turtle(ttl_text)
 
     graph_uri = repository.new_graph_iri()
     repository.insert_vocabulary(graph_uri, local)

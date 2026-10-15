@@ -1,6 +1,6 @@
 services:
   fuseki2:
-    build: ../TripleStore
+    build: ./TripleStore
     container_name: fuseki2
     environment:
       FUSEKI_DATASET_1: Metadataordbog
@@ -30,4 +30,4 @@ volumes:
 
 secrets:
   ADMIN_PASSWORD:
-    file: ../TripleStore/secrets/ADMIN_PASSWORD_PLAIN.txt
+    file: ./TripleStore/secrets/ADMIN_PASSWORD_PLAIN.txt
