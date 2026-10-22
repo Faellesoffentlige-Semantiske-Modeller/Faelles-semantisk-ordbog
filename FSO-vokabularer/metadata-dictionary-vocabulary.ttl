@@ -2,7 +2,7 @@
 # imports: http://www.w3.org/2004/02/skos/core
 # imports: https://data.gov.dk/model/core/metadata-dictionary-concepts
 
-@prefix mdc: <https://data.gov.dk/model/core/metadata-dictionary-concepts/> .
+@prefix mdc: <https://data.gov.dk/concept/core/metadata-dictionary-concepts/> .
 @prefix mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
