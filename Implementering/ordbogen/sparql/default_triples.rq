@@ -1,3 +1,0 @@
-# Every triple in the dataset's default graph.
-SELECT ?s ?p ?o
-WHERE { ?s ?p ?o }

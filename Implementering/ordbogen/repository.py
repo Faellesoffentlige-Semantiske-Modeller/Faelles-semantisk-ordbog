@@ -19,7 +19,6 @@ from .models import (
     ItemCard,
     LABEL_PREDICATE,
     Term,
-    Triple,
     build_facts,
     local_name,
     prefer_language,
@@ -71,18 +70,6 @@ class DictionaryRepository:
         return self._update_store
 
     # --- reads ---------------------------------------------------------
-
-    def default_graph_triples(self) -> list[Triple]:
-        """Every triple in the default graph."""
-        return [
-            (str(row[0]), str(row[1]), str(row[2]))
-            for row in self.reader.query(load_sparql("default_triples.rq"))
-        ]
-
-    def named_graph_names(self) -> list[str]:
-        """The names of all named graphs, sorted."""
-        rows = self.reader.query(load_sparql("list_named_graphs.rq"))
-        return sorted(str(row[0]) for row in rows)
 
     def list_items(self) -> list[ItemCard]:
         """All dictionary items."""

@@ -12,8 +12,6 @@
     <p>Simpel UI til Fuseki-datasettet <code>Metadataordbog</code>.</p>
     <p class="endpoint">Endpoint: <code>{{ endpoint }}</code></p>
     <ul class="nav">
-      <li><a href="{{ url_for('main.default_graph') }}">Alle triples i default-graf → /default</a></li>
-      <li><a href="{{ url_for('main.named_graphs') }}">Navne på alle named graphs → /graph</a></li>
       <li><a href="{{ url_for('items.index') }}">Dictionary items som kort → /items</a></li>
       <li><a href="{{ url_for('upload.index') }}">Upload TTL til ny named graph → /upload</a></li>
     </ul>

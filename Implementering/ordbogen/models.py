@@ -8,10 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-# A single RDF statement, already stringified for display.
-Triple = tuple[str, str, str]
-
-
 def local_name(iri: str) -> str:
     """Return the last path/fragment segment of an IRI, for display."""
     return iri.rstrip("/#").replace("#", "/").rsplit("/", 1)[-1] or iri
