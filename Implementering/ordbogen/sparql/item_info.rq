@@ -1,13 +1,16 @@
-PREFIX mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 # Look up a DictionaryItem (default graph) and pull the element's triples from
 # its related defining graph (the element graph). Metadata columns repeat per
 # element triple; the GRAPH block is OPTIONAL so an empty element graph still
 # returns the item's references.
-SELECT ?element ?definingGraph ?vocabulary ?s ?p ?o
+SELECT ?definingGraph ?vocabulary ?vocabularyLabel ?itemType ?s ?p ?o
 WHERE {
-  <$item> mdv:representsElement ?element ;
+  <$item> a mdv:DictionaryItem ;
           mdv:definingGraph ?definingGraph ;
-          mdv:fromVocabulary ?vocabulary .
+          rdfs:isDefinedBy  ?vocabulary .
+  OPTIONAL { <$item> mdv:itemType ?itemType }
+  OPTIONAL { ?vocabulary rdfs:label ?vocabularyLabel }
   OPTIONAL { GRAPH ?definingGraph { ?s ?p ?o } }
 }

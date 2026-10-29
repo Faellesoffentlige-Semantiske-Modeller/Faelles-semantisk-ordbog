@@ -1,0 +1,20 @@
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+INSERT {
+  GRAPH ?elementGraph { ?node ?p ?o . }
+}
+WHERE {
+  ?element rdfs:isDefinedBy <$vocabulary> ;
+           mdv:definingGraph ?elementGraph .
+
+  GRAPH <$vocabulary> {
+    ?element ?elementPredicate ?start .
+    FILTER isBlank(?start)
+    ?start (rdf:first|rdf:rest|owl:unionOf|owl:intersectionOf|owl:oneOf|owl:complementOf)* ?node .
+    FILTER isBlank(?node)
+    ?node ?p ?o .
+  }
+}

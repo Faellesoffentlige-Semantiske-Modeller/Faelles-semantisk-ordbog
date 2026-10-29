@@ -1,0 +1,6 @@
+PREFIX mdv: <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+ASK {
+  ?item a mdv:DictionaryItem .
+  FILTER (STRSTARTS(STR(?item), "$namespace"))
+}

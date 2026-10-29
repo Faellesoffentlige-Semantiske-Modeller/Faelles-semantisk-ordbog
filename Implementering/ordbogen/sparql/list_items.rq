@@ -5,14 +5,12 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 # vocabulary they come from, and the element's rdfs:label(s) from its defining
 # graph. An item repeats once per label (one per language); one row per item
 # when it has none. The repository picks the preferred language.
-SELECT ?item ?element ?vocabulary ?label
+SELECT ?item ?vocabulary ?itemType ?label
 WHERE {
   ?item a mdv:DictionaryItem ;
-        mdv:representsElement ?element ;
-        mdv:fromVocabulary ?vocabulary .
-  OPTIONAL {
-    ?item mdv:definingGraph ?definingGraph .
-    GRAPH ?definingGraph { ?element rdfs:label ?label }
-  }
+        rdfs:isDefinedBy  ?vocabulary ;
+        mdv:definingGraph ?definingGraph .
+  OPTIONAL { ?item mdv:itemType ?itemType }
+  OPTIONAL { GRAPH ?definingGraph { ?item rdfs:label ?label } }
 }
-ORDER BY ?element
+ORDER BY ?item

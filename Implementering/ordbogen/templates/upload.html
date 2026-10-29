@@ -3,6 +3,8 @@
 {% from "_form_error.html" import form_error_message %}
 {% set ttl_error = errors.get(ttl_field) %}
 {% set namespace_error = errors.get(namespace_field) %}
+{% set download_url_error = errors.get(download_url_field) %}
+{% set page_error = errors.get(page_field) %}
 <!doctype html>
 <html lang="da">
 <head>
@@ -22,7 +24,13 @@
         {% call toast("success", "Upload gennemført") %}
           {{ result.triple_count }} triple(s) blev indsat i den nye named graph
           <code>{{ result.graph_uri }}</code>.
-          Namespace anvendt til opsplitning: <code>{{ result.ontology }}</code>
+          Namespace anvendt til opsplitning: <code>{{ result.ontology }}</code>.
+          {% if item_counts %}
+            Ordbogselementer oprettet:
+            {% for item_type, count in item_counts %}{{ count }} {{ item_type }}{% if not loop.last %}, {% endif %}{% endfor %}.
+          {% else %}
+            Der blev ikke oprettet nogen ordbogselementer. Tjek at namespace passer til filen.
+          {% endif %}
         {% endcall %}
       {% endif %}
     {% endcall %}
@@ -75,6 +83,62 @@
         </div>
         <p class="form-hint" id="ontology-status" role="status" aria-live="polite"></p>
       </div>
+
+      {# Optional. Gæt namespace fills label, description and version from the
+         file's header; what is typed here is stored as metadata on the
+         vocabulary in the default graph. #}
+      <fieldset>
+        <legend class="h3">Om vokabularet</legend>
+        <p class="form-hint">
+          Alle felter er valgfrie. Betegnelse, beskrivelse og version udfyldes fra
+          filen, når du trykker <em>Gæt namespace</em>, hvis felterne er tomme.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="label">Betegnelse</label>
+          <span class="form-hint" id="label-hint">Vokabularets navn på dansk, fx FOAF-vokabularet.</span>
+          <input type="text" class="form-input" id="label" name="label"
+                 value="{{ vocabulary.label }}" aria-describedby="label-hint">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Beskrivelse</label>
+          <span class="form-hint" id="description-hint">Kort beskrivelse af vokabularet på dansk.</span>
+          <textarea class="form-input" id="description" name="description" rows="3"
+                    aria-describedby="description-hint">{{ vocabulary.description }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="version">Version</label>
+          <span class="form-hint" id="version-hint">Fx 0.99.</span>
+          <input type="text" class="form-input input-width-s" id="version" name="version"
+                 value="{{ vocabulary.version }}" aria-describedby="version-hint">
+        </div>
+
+        <div class="form-group{% if download_url_error %} form-error{% endif %}">
+          <label class="form-label" for="{{ download_url_field }}">Downloadside</label>
+          <span class="form-hint" id="download_url-hint">
+            Hvor filen er hentet fra, fx http://xmlns.com/foaf/spec/index.rdf.
+          </span>
+          {% if download_url_error %}{{ form_error_message(download_url_field, download_url_error) }}{% endif %}
+          <input type="url" class="form-input" id="{{ download_url_field }}" name="download_url"
+                 value="{{ vocabulary.download_url }}"
+                 {% if download_url_error %}aria-invalid="true"{% endif %}
+                 aria-describedby="download_url-hint{% if download_url_error %} {{ download_url_field }}-error{% endif %}">
+        </div>
+
+        <div class="form-group{% if page_error %} form-error{% endif %}">
+          <label class="form-label" for="{{ page_field }}">Dokumentation</label>
+          <span class="form-hint" id="page-hint">
+            Side der beskriver vokabularet, fx http://xmlns.com/foaf/spec/.
+          </span>
+          {% if page_error %}{{ form_error_message(page_field, page_error) }}{% endif %}
+          <input type="url" class="form-input" id="{{ page_field }}" name="page"
+                 value="{{ vocabulary.page }}"
+                 {% if page_error %}aria-invalid="true"{% endif %}
+                 aria-describedby="page-hint{% if page_error %} {{ page_field }}-error{% endif %}">
+        </div>
+      </fieldset>
 
       <p class="form-hint">
         Intet gemmes i triplestore, før du trykker <em>Fuldfør upload</em>.
@@ -177,6 +241,20 @@
       // --- "Gæt namespace": the guess endpoint only parses; nothing is stored
       // until the form itself is submitted. ---
 
+      // Put the values read from the file into the "Om vokabularet" fields the
+      // user has left empty. Returns whether any field was filled.
+      function fillEmpty(values) {
+        var filled = false;
+        ["label", "description", "version"].forEach(function (name) {
+          var input = form.elements[name];
+          if (values[name] && input.value.trim() === "") {
+            input.value = values[name];
+            filled = true;
+          }
+        });
+        return filled;
+      }
+
       guessButton.addEventListener("click", function () {
         if (!hasTurtle()) {
           setFieldError(fileInput, MESSAGES.missingTtl);
@@ -188,6 +266,7 @@
         var file = fileInput.files[0];
         if (file) { data.append("file", file); }
         data.append("ttl_text", textInput.value);
+        data.append("ontology", namespaceInput.value);
 
         guessButton.disabled = true;
         status.textContent = "Gætter namespace…";
@@ -214,6 +293,9 @@
             } else {
               status.textContent = "Kunne ikke finde en owl:Ontology. " +
                 "Angiv namespace manuelt.";
+            }
+            if (fillEmpty(reply.body)) {
+              status.textContent += " Tomme felter under Om vokabularet er udfyldt fra filen.";
             }
           })
           .catch(function () {

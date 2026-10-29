@@ -1,0 +1,10 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+
+# How many dictionary items (default graph) of each type a vocabulary gave.
+SELECT ?itemType (COUNT(DISTINCT ?item) AS ?items)
+WHERE {
+  ?item rdfs:isDefinedBy <$vocabulary> ;
+        mdv:itemType ?itemType .
+}
+GROUP BY ?itemType

@@ -39,11 +39,9 @@ class Config:
     update_endpoint: str | None = None
     user: str | None = None
     password: str | None = None
-    # Base IRI for uploaded source graphs and the per-element graphs split
-    # out of them.
+    # Base IRI for uploaded source graphs, the per-element graphs split out of
+    # them, and evaluations. Dictionary items use the element IRI itself.
     graph_base: str = GRAPH_BASE
-    # Base IRI for the mdv:DictionaryItem resources created per element.
-    item_base: str = GRAPH_BASE
 
     def __post_init__(self) -> None:
         if not self.update_endpoint:

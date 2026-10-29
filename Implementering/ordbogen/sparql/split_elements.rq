@@ -1,47 +1,62 @@
-PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX owl:  <http://www.w3.org/2002/07/owl#>
-PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:     <http://www.w3.org/2002/07/owl#>
+PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX mdv:     <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
+PREFIX mdc:     <https://data.gov.dk/model/core/metadata-dictionary-concepts/>
 
+# Split every element of the vocabulary graph into its own element graph
 INSERT {
-  GRAPH ?elementGraph {
-    ?s ?p ?o .
-  }
-  # DictionaryItem lives in the default graph (no GRAPH wrapper).
-  ?dictItem a mdv:DictionaryItem ;
-    mdv:definingGraph ?elementGraph ;
-    mdv:representsElement ?s ;
-    mdv:fromVocabulary <$source_graph> .
+  GRAPH ?elementGraph { ?element ?p ?o . }
+
+  <$vocabulary> dcterms:hasPart ?elementGraph .
+
+  ?elementGraph a mdv:ElementGraph ;
+      rdfs:label ?graphLabel ;
+      dcterms:description ?graphDescription ;
+      dcterms:isPartOf <$vocabulary> .
+
+  ?element a mdv:DictionaryItem ;
+      rdfs:isDefinedBy <$vocabulary> ;
+      mdv:definingGraph ?elementGraph ;
+      mdv:itemType ?itemType .
 }
 WHERE {
-  # All triples for each element
-  GRAPH <$source_graph> {
-    ?s ?p ?o .
-    { ?s rdf:type rdf:Property }          UNION
-    { ?s rdf:type owl:DatatypeProperty }   UNION
-    { ?s rdf:type owl:FunctionalProperty } UNION
-    { ?s rdf:type owl:ObjectProperty }     UNION
-    { ?s rdf:type owl:DeprecatedProperty } UNION
-    { ?s rdf:type owl:AnnotationProperty }
-    FILTER (STRSTARTS(STR(?s), "$ontology"))
+  # The rdf:types that make a subject an element, and the item type each gives.
+  VALUES (?rdfType ?itemType) {
+    (owl:Class                     mdc:Class)
+    (rdfs:Class                    mdc:Class)
+    (owl:DeprecatedClass           mdc:Class)
+    (rdf:Property                  mdc:Property)
+    (owl:ObjectProperty            mdc:Property)
+    (owl:DatatypeProperty          mdc:Property)
+    (owl:AnnotationProperty        mdc:Property)
+    (owl:FunctionalProperty        mdc:Property)
+    (owl:InverseFunctionalProperty mdc:Property)
+    (owl:TransitiveProperty        mdc:Property)
+    (owl:SymmetricProperty         mdc:Property)
+    (owl:DeprecatedProperty        mdc:Property)
+    (rdfs:Datatype                 mdc:DataType)
+    (skos:Concept                  mdc:Concept)
   }
 
-  # Generate exactly one element graph IRI and one dictionary item IRI per
-  # distinct element.
-  {
-    SELECT ?s
-      (IRI(CONCAT("$element_base", STRUUID())) AS ?elementGraph)
-      (IRI(CONCAT("$item_base", STRUUID())) AS ?dictItem)
-    WHERE {
-      GRAPH <$source_graph> {
-        { ?s rdf:type rdf:Property }          UNION
-        { ?s rdf:type owl:DatatypeProperty }   UNION
-        { ?s rdf:type owl:FunctionalProperty } UNION
-        { ?s rdf:type owl:ObjectProperty }     UNION
-        { ?s rdf:type owl:DeprecatedProperty } UNION
-        { ?s rdf:type owl:AnnotationProperty }
-        FILTER (STRSTARTS(STR(?s), "$ontology"))
-      }
-    }
-    GROUP BY ?s
+  GRAPH <$vocabulary> {
+    ?element rdf:type ?rdfType ;
+             ?p ?o .
   }
+  FILTER (isIRI(?element) && STRSTARTS(STR(?element), "$namespace"))
+
+  # One new element graph IRI per element.
+  {
+    SELECT ?element (IRI(CONCAT("$graph_base", STRUUID())) AS ?elementGraph)
+    WHERE { GRAPH <$vocabulary> { ?element rdf:type ?anyType } }
+    GROUP BY ?element
+  }
+
+  # Texts for the element graph, e.g. "Elementgraf for Person".
+  BIND (REPLACE(STR(?element), "^.*[/#]", "") AS ?localName)
+  BIND (STRLANG(CONCAT("Elementgraf for ", ?localName), "da") AS ?graphLabel)
+  BIND (STRLANG(CONCAT("De triples der definerer ", STR(?element),
+                       " i det uploadede vokabular."), "da") AS ?graphDescription)
 }

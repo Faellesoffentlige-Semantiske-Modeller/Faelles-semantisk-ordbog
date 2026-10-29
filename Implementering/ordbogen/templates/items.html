@@ -21,15 +21,16 @@
       <p>{{ count }} item(s).</p>
       <table class="items-table">
         <thead>
-          <tr><th scope="col">Navn</th><th scope="col">Element</th></tr>
+          <tr><th scope="col">Navn</th><th scope="col">Element</th><th scope="col">Type</th></tr>
         </thead>
         <tbody>
           {% for card in cards %}
             <tr class="clickable-row">
               <td class="item-label">
-                <a href="{{ url_for('items.detail', item_uuid=card.uuid) }}">{{ card.label }}</a>
+                <a href="{{ url_for('items.detail', iri=card.iri) }}">{{ card.label }}</a>
               </td>
-              <td>{{ card.element }}</td>
+              <td>{{ card.iri }}</td>
+              <td>{{ card.item_types|join(", ") }}</td>
             </tr>
           {% endfor %}
         </tbody>

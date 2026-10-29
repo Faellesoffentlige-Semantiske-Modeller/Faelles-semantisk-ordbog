@@ -1,10 +1,12 @@
 ```
+@prefix csd: <https://data.gov.dk/dataset/dictionary/common-semantic-dictionary/> .
+
 # default graph
 csd:A  a mdv:SemanticAsset ;
        rdfs:label "…" ; dcterms:description "…" ; owl:versionInfo "…" ;
        dcterms:type mdc:Vocabulary ; adms:status mdc:evaluationProposed ;
        mdv:downloadURL "…"^^xsd:anyURI ; mdv:downloadTime "…"^^xsd:dateTime ;
-       foaf:page <doc> ; dcterms:publisher <org> ; dcterms:creator <org> ;
+       foaf:page <doc> ;
        dcat:previousVersion csd:A0 ;
        dcterms:hasPart csd:E1 .
 
@@ -25,6 +27,8 @@ GRAPH csd:E1 { foaf:Person … }
 
 
 ```
+@prefix csd: <https://data.gov.dk/dataset/dictionary/common-semantic-dictionary/> .
+
 # ---------------------------------------------------------------------------
 # default graph: metadata om vokabular og elementer, samt dictonary items
 # ---------------------------------------------------------------------------
@@ -40,14 +44,10 @@ csd:e209a4b8-596d-4417-b8a1-f9eff775a5ae
        mdv:downloadURL "http://xmlns.com/foaf/spec/index.rdf"^^xsd:anyURI ;
        mdv:downloadTime "2026-10-22T10:15:00"^^xsd:dateTime ;
        foaf:page <http://xmlns.com/foaf/spec/> ;
-       dcterms:publisher csd:org-foaf-project ;
-       dcterms:creator   csd:org-foaf-project ;
+       # dcterms:publisher / dcterms:creator :
        # dcat:previousVersion : er ikke med i eksemplet, da det antages at det er første upload af FOAF
        dcterms:hasPart csd:4ea21847-7c6e-4886-b288-0de20f75d1ad ,       # foaf:Person
                        csd:9bb2850e-af43-4117-ae7d-6ae55bec8ea9 .       # foaf:name … (osv. et per element)
-
-csd:org-foaf-project a org:FormalOrganization ;
-       rdfs:label "FOAF Project"@en .
 
 # The element graph for foaf:Person (named graph csd:4ea21847-…)
 csd:4ea21847-7c6e-4886-b288-0de20f75d1ad

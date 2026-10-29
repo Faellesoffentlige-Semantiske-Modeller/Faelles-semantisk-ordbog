@@ -22,6 +22,12 @@
         <p class="error">Ingen dictionary item fundet for <code>{{ item_iri }}</code>.</p>
       {% endif %}
     {% else %}
+      <p>
+        <code>{{ item.iri }}</code>
+        {% if item.item_types %}· {{ item.item_types|join(", ") }}{% endif %}
+        · fra {{ item.vocabulary_name or item.vocabulary }}
+      </p>
+
       {% if item.facts %}
         <table class="facts-table">
           <tbody>

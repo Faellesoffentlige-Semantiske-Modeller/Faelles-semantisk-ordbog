@@ -67,15 +67,17 @@ def prefer_language(terms: list[Term]) -> list[Term]:
 class ItemCard:
     """One mdv:DictionaryItem as shown in the /items table."""
 
-    uuid: str
-    element: str
+    # The item IRI is the element IRI, e.g. http://xmlns.com/foaf/0.1/Person.
+    iri: str
     vocabulary: str
     # The item's rdfs:label in the preferred language, if it has one.
     name: str = ""
+    # Local names of the item's mdv:itemType values, e.g. ["Class"].
+    item_types: list[str] = field(default_factory=list)
 
     @property
     def label(self) -> str:
-        return self.name or local_name(self.element)
+        return self.name or local_name(self.iri)
 
 
 # --- the "Om elementet" facts shown on an item page ---------------------
@@ -167,15 +169,15 @@ class DictionaryItem:
     """One mdv:DictionaryItem, described by the triples of its defining graph."""
 
     iri: str
-    uuid: str
-    element: str
     defining_graph: str
     vocabulary: str
     # The item's rdfs:label in the preferred language, if it has one.
     name: str = ""
+    vocabulary_name: str = ""
+    item_types: list[str] = field(default_factory=list)
     facts: list[Fact] = field(default_factory=list)
     evaluation: Evaluation | None = None
 
     @property
     def title(self) -> str:
-        return self.name or local_name(self.element)
+        return self.name or local_name(self.iri)

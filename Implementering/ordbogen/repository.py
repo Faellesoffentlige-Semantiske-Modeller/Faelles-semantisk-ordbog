@@ -21,6 +21,7 @@ from .models import (
     Term,
     Triple,
     build_facts,
+    local_name,
     prefer_language,
 )
 from .store import load_sparql, query_store, update_store
@@ -33,6 +34,16 @@ def _term(node) -> Term:
         lang=getattr(node, "language", None) or "",
         is_iri=isinstance(node, URIRef),
     )
+
+
+def _distinct(rows, column: str) -> list:
+    """The values of a result column without repeats and unbound values, in order."""
+    return list(dict.fromkeys(row[column] for row in rows if row[column] is not None))
+
+
+def _item_type_names(rows) -> list[str]:
+    """The local names of the mdv:itemType values in the rows, e.g. ["Class"]."""
+    return sorted(local_name(str(item_type)) for item_type in _distinct(rows, "itemType"))
 
 
 class DictionaryRepository:
@@ -74,58 +85,71 @@ class DictionaryRepository:
         return sorted(str(row[0]) for row in rows)
 
     def list_items(self) -> list[ItemCard]:
-        """All dictionary items whose IRI sits under the configured item base."""
-        base = self.config.item_base
-        # An item comes back once per rdfs:label (one per language).
+        """All dictionary items."""
+        # An item comes back once per rdfs:label (one per language) and item type.
         rows_by_item: dict[str, list] = {}
         for row in self.reader.query(load_sparql("list_items.rq")):
-            item_iri = str(row.item)
-            if item_iri.startswith(base):
-                rows_by_item.setdefault(item_iri, []).append(row)
+            rows_by_item.setdefault(str(row.item), []).append(row)
 
         cards = []
         for item_iri, rows in rows_by_item.items():
-            labels = [_term(row.label) for row in rows if row.label is not None]
+            labels = [_term(label) for label in _distinct(rows, "label")]
             preferred = prefer_language(labels)
             cards.append(
                 ItemCard(
-                    uuid=item_iri[len(base):],
-                    element=str(rows[0].element),
+                    iri=item_iri,
                     vocabulary=str(rows[0].vocabulary),
                     name=preferred[0].value if preferred else "",
+                    item_types=_item_type_names(rows),
                 )
             )
         return sorted(cards, key=lambda card: card.label.casefold())
 
-    def get_item(self, item_uuid: str) -> DictionaryItem | None:
+    def get_item(self, item_iri: str) -> DictionaryItem | None:
         """Return one dictionary item described for display, or None."""
-        item_iri = self.item_iri(item_uuid)
         rows = list(self.reader.query(load_sparql("item_info.rq", item=item_iri)))
         if not rows:
             return None
 
-        last = rows[-1]
-        element = str(last.element)
-        # The defining graph holds the element's own triples; keep just those.
-        statements = [
-            (str(row.p), _term(row.o))
+        first = rows[0]
+        # The defining graph holds the element's own triples, plus the blank
+        # nodes they point to; keep just the element's own. A triple repeats
+        # once per item type and vocabulary label, so keep each once.
+        own = dict.fromkeys(
+            (str(row.p), row.o)
             for row in rows
-            if row.s is not None and str(row.s) == element
-        ]
+            if row.s is not None and str(row.s) == item_iri
+        )
+        statements = [(predicate, _term(value)) for predicate, value in own]
         names = prefer_language(
             [term for predicate, term in statements if predicate == LABEL_PREDICATE]
         )
+        vocabulary_names = prefer_language(
+            [_term(label) for label in _distinct(rows, "vocabularyLabel")]
+        )
         item = DictionaryItem(
             iri=item_iri,
-            uuid=item_uuid,
-            element=element,
-            defining_graph=str(last.definingGraph),
-            vocabulary=str(last.vocabulary),
+            defining_graph=str(first.definingGraph),
+            vocabulary=str(first.vocabulary),
             name=names[0].value if names else "",
+            vocabulary_name=vocabulary_names[0].value if vocabulary_names else "",
+            item_types=_item_type_names(rows),
             facts=build_facts(statements),
         )
         item.evaluation = self.read_evaluation(item_iri)
         return item
+
+    def has_items_in_namespace(self, namespace: str) -> bool:
+        """Whether any dictionary item's IRI starts with the namespace."""
+        result = self.reader.query(
+            load_sparql("items_in_namespace.rq", namespace=namespace)
+        )
+        return bool(result.askAnswer)
+
+    def count_items(self, vocabulary: str) -> dict[str, int]:
+        """How many dictionary items of each mdv:itemType a vocabulary gave."""
+        rows = self.reader.query(load_sparql("count_items.rq", vocabulary=vocabulary))
+        return {str(row.itemType): int(row.items) for row in rows}
 
     def read_evaluation(self, item_iri: str) -> Evaluation | None:
         """Return the evaluation linked from an item, or None if it has none."""
@@ -145,30 +169,33 @@ class DictionaryRepository:
 
     # --- writes --------------------------------------------------------
 
-    def insert_vocabulary(self, graph_uri: str, graph: Graph) -> None:
-        """Load a parsed vocabulary into its own source named graph."""
-        self.writer.update(
+    def ingest_vocabulary(
+        self, vocabulary: str, graph: Graph, metadata: Graph, namespace: str
+    ) -> None:
+        """Load a vocabulary, its metadata, element graphs and items in one transaction.
+
+        The operations run in order in a single update request, so each one sees
+        what the earlier ones wrote, and Fuseki applies all of them or none.
+        """
+        operations = [
             load_sparql(
                 "insert_data_graph.rq",
-                graph=graph_uri,
+                graph=vocabulary,
                 triples=graph.serialize(format="nt"),
-            )
-        )
-
-    def split_elements(self, source_graph: str, ontology: str) -> None:
-        """Split each element of a source graph into its own element graph.
-
-        Also creates one mdv:DictionaryItem per element in the default graph.
-        """
-        self.writer.update(
+            ),
+            load_sparql(
+                "insert_data_default.rq",
+                triples=metadata.serialize(format="nt"),
+            ),
             load_sparql(
                 "split_elements.rq",
-                source_graph=source_graph,
-                ontology=ontology,
-                element_base=self.config.graph_base,
-                item_base=self.config.item_base,
-            )
-        )
+                vocabulary=vocabulary,
+                namespace=namespace,
+                graph_base=self.config.graph_base,
+            ),
+            load_sparql("copy_blank_nodes.rq", vocabulary=vocabulary),
+        ]
+        self.writer.update(" ;\n".join(operations))
 
     def create_evaluation(self, item_iri: str) -> str:
         """Create an empty evaluation, link it to the item, return its IRI."""
@@ -221,10 +248,6 @@ class DictionaryRepository:
         return evaluation_iri
 
     # --- IRI helpers ---------------------------------------------------
-
-    def item_iri(self, item_uuid: str) -> str:
-        """The IRI of the dictionary item with this UUID."""
-        return self.config.item_base + item_uuid
 
     def new_graph_iri(self) -> str:
         """Mint an IRI for a newly uploaded source graph."""
