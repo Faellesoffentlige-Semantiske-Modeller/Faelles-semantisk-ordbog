@@ -136,7 +136,9 @@ def _submitted_vocabulary(req: Request) -> VocabularyForm:
     """The "Om vokabularet" fields. The ingest code never sees the request."""
     return VocabularyForm(
         label=req.form.get("label", "").strip(),
+        labelDa=req.form.get("labelDa", "").strip(),
         description=req.form.get("description", "").strip(),
+        descriptionDa=req.form.get("descriptionDa", "").strip(),
         version=req.form.get("version", "").strip(),
         download_url=req.form.get("download_url", "").strip(),
         page=req.form.get("page", "").strip(),

@@ -41,6 +41,8 @@
     {# novalidate: errors are shown with the design system's field errors, by
        the server or by the script below, not by the browser's own popups. #}
     <form method="post" enctype="multipart/form-data" id="upload-form" novalidate>
+     <div class="upload-columns">
+      <div class="upload-column">
       <div class="form-group file-input{% if ttl_error %} form-error{% endif %}">
         <label class="form-label" for="{{ ttl_field }}">Vedhæft TTL-fil</label>
         <span class="form-hint" id="fileinput-hint">
@@ -83,6 +85,9 @@
         </div>
         <p class="form-hint" id="ontology-status" role="status" aria-live="polite"></p>
       </div>
+      </div>
+
+      <div class="upload-column">
 
       {# Optional. Gæt namespace fills label, description and version from the
          file's header; what is typed here is stored as metadata on the
@@ -96,16 +101,22 @@
 
         <div class="form-group">
           <label class="form-label" for="label">Betegnelse</label>
-          <span class="form-hint" id="label-hint">Vokabularets navn på dansk, fx FOAF-vokabularet.</span>
+          <span class="form-hint" id="label-hint">Vokabularets som det står defineret i vokabularet.</span>
           <input type="text" class="form-input" id="label" name="label"
                  value="{{ vocabulary.label }}" aria-describedby="label-hint">
+          <span class="form-hint" id="label-hint">Vokabularets navn på dansk, fx FOAF-vokabularet.</span>
+          <input type="text" class="form-input" id="labelDa" name="labelDa"
+                 value="{{ vocabulary.labelDa }}" aria-describedby="labelDa-hint">
         </div>
 
         <div class="form-group">
           <label class="form-label" for="description">Beskrivelse</label>
-          <span class="form-hint" id="description-hint">Kort beskrivelse af vokabularet på dansk.</span>
-          <textarea class="form-input" id="description" name="description" rows="3"
+          <span class="form-hint" id="description-hint">Den originale beskrivelse om vokabularet/span>
+          <textarea class="form-input" id="description" name="description" rows="2"
                     aria-describedby="description-hint">{{ vocabulary.description }}</textarea>
+          <span class="form-hint" id="description-hint">Kort beskrivelse af vokabularet på dansk.</span>
+          <textarea class="form-input" id="descriptionDa" name="descriptionDa" rows="2"
+                    aria-describedby="description-hint">{{ vocabulary.descriptionDa }}</textarea>
         </div>
 
         <div class="form-group">
@@ -139,6 +150,8 @@
                  aria-describedby="page-hint{% if page_error %} {{ page_field }}-error{% endif %}">
         </div>
       </fieldset>
+      </div>
+     </div>
 
       <p class="form-hint">
         Intet gemmes i triplestore, før du trykker <em>Fuldfør upload</em>.

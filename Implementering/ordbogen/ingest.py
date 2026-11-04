@@ -43,10 +43,13 @@ _VERSION_PREDICATES = (OWL.versionInfo, DCTERMS.hasVersion)
 class VocabularyForm:
     """Vocabulary metadata typed in on the upload page. Empty means not given."""
     label: str = ""
+    labelDa: str = ""
     description: str = ""
+    descriptionDa: str = ""
     version: str = ""
     download_url: str = ""
     page: str = ""
+    
 
 def detect_ontology(graph: Graph) -> str | None:
     """Return the IRI of the first owl:Ontology in the graph, or None."""
@@ -126,10 +129,12 @@ def _first_literals(graph: Graph, subject: URIRef, predicates) -> list[Literal]:
             return values
     return []
 
-def vocabulary_metadata(
-    vocabulary: URIRef, header: VocabularyHeader, form: VocabularyForm
-) -> Graph:
-    """The default-graph triples about the vocabulary itself."""
+def vocabulary_metadata(vocabulary: URIRef, form: VocabularyForm) -> Graph:
+    """The default-graph triples about the vocabulary itself.
+
+    Only what was submitted in the form is stored. Values read from the file's
+    header are suggestions for the form (Gæt namespace), not metadata.
+    """
     g = Graph()
     g.add((vocabulary, RDF.type, MDV.SemanticAsset))
     g.add((vocabulary, DCTERMS.type, MDC.Vocabulary))
@@ -137,9 +142,11 @@ def vocabulary_metadata(
     g.add((vocabulary, MDV.downloadTime,
            Literal(datetime.now(timezone.utc).replace(microsecond=0))))
 
-    _add_texts(g, vocabulary, RDFS.label, header.labels, form.label, lang="da")
-    _add_texts(g, vocabulary, DCTERMS.description, header.descriptions, form.description, lang="da")
-    _add_texts(g, vocabulary, OWL.versionInfo, header.versions, form.version, lang=None)
+    _add_text(g, vocabulary, RDFS.label, form.label, lang="en")
+    _add_text(g, vocabulary, RDFS.label, form.labelDa, lang="da")
+    _add_text(g, vocabulary, DCTERMS.description, form.description, lang="en")
+    _add_text(g, vocabulary, DCTERMS.description, form.descriptionDa, lang="da")
+    _add_text(g, vocabulary, OWL.versionInfo, form.version, lang=None)
 
     if form.download_url:
         g.add((vocabulary, MDV.downloadURL, Literal(form.download_url, datatype=XSD.anyURI)))
@@ -147,11 +154,9 @@ def vocabulary_metadata(
         g.add((vocabulary, FOAF.page, URIRef(form.page)))
     return g
 
-def _add_texts(g, subject, predicate, from_file, typed, lang):
-    for value in from_file:
-        g.add((subject, predicate, value))
-    if typed and typed not in (str(value) for value in from_file):
-        g.add((subject, predicate, Literal(typed, lang=lang)))
+def _add_text(g, subject, predicate, text, lang):
+    if text:
+        g.add((subject, predicate, Literal(text, lang=lang)))
 
 def ingest_turtle(
     repository: DictionaryRepository,
@@ -180,8 +185,7 @@ def ingest_turtle(
         )
 
     graph_uri = repository.new_graph_iri()
-    header = read_vocabulary_metadata(local, ontology)
-    metadata = vocabulary_metadata(URIRef(graph_uri), header, form or VocabularyForm())
+    metadata = vocabulary_metadata(URIRef(graph_uri), form or VocabularyForm())
     repository.ingest_vocabulary(graph_uri, local, metadata, ontology)
 
     return IngestResult(
