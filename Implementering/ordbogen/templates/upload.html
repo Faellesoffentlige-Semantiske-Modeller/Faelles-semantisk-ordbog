@@ -60,7 +60,7 @@
         <span class="form-hint" id="ttltext-hint">
           Fuld Turtle-tekst. Bruges hvis der ikke er valgt en fil.
         </span>
-        <textarea class="form-input" id="ttl_text" name="ttl_text" rows="12"
+        <textarea class="form-input" id="ttl_text" name="ttl_text" rows="8"
                   aria-describedby="ttltext-hint"
                   placeholder="@prefix ex: <http://example.org/> .&#10;ex:s ex:p ex:o .">{{ ttl_text }}</textarea>
       </div>
@@ -101,7 +101,7 @@
 
         <div class="form-group">
           <label class="form-label" for="label">Betegnelse</label>
-          <span class="form-hint" id="label-hint">Vokabularets som det står defineret i vokabularet.</span>
+          <span class="form-hint" id="label-hint">Vokabularets navn som det står defineret i vokabularet.</span>
           <input type="text" class="form-input" id="label" name="label"
                  value="{{ vocabulary.label }}" aria-describedby="label-hint">
           <span class="form-hint" id="label-hint">Vokabularets navn på dansk, fx FOAF-vokabularet.</span>
@@ -111,7 +111,7 @@
 
         <div class="form-group">
           <label class="form-label" for="description">Beskrivelse</label>
-          <span class="form-hint" id="description-hint">Den originale beskrivelse om vokabularet/span>
+          <span class="form-hint" id="description-hint">Den originale beskrivelse om vokabularet</span>
           <textarea class="form-input" id="description" name="description" rows="2"
                     aria-describedby="description-hint">{{ vocabulary.description }}</textarea>
           <span class="form-hint" id="description-hint">Kort beskrivelse af vokabularet på dansk.</span>
@@ -122,7 +122,7 @@
         <div class="form-group">
           <label class="form-label" for="version">Version</label>
           <span class="form-hint" id="version-hint">Fx 0.99.</span>
-          <input type="text" class="form-input input-width-s" id="version" name="version"
+          <input type="text" class="form-input" id="version" name="version"
                  value="{{ vocabulary.version }}" aria-describedby="version-hint">
         </div>
 

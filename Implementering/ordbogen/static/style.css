@@ -76,15 +76,26 @@ tbody tr:nth-child(even) { background: #f7f9fb; }
   .upload-columns { grid-template-columns: 1fr; gap: 0; }
 }
 
+
+.upload-column { --field-width: 70%; }
+
+.upload-column .form-input {
+  width: var(--field-width);
+  max-width: none;
+}
+
+/* The input's top margin moves to the row, so the input and the button start
+   at the same height and the button stretches to the input's height. */
 .namespace-row {
   display: flex;
   gap: 0.75rem;
-  align-items: center;
+  align-items: stretch;
+  margin-top: 8px;
 }
 
-.namespace-row .form-input { flex: 1; max-width: none; }
+.namespace-row .form-input { flex: none; margin-top: 0; }
 
-.namespace-row .button { margin-top: 0; white-space: nowrap; }
+.namespace-row .button { flex: none; margin-top: 0; white-space: nowrap; }
 
 /* dkfds only reddens inputs that are direct children of .form-error */
 .form-group.form-error .namespace-row .form-input {
