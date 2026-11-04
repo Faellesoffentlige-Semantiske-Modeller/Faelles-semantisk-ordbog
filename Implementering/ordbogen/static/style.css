@@ -89,6 +89,15 @@ tbody tr:nth-child(even) { background: #f7f9fb; }
 
 .items-table th, .items-table td, .facts-table th, .facts-table td { padding: 0.8rem 1.2rem; }
 
+/* sortable column headers (designsystem.dk "Sortering i tabeller") */
+.items-table thead th button {
+  display: flex;
+  align-items: center;
+  width: auto;
+  font: inherit;
+  font-weight: 600;
+}
+
 .items-table .item-label { font-size: 2rem; font-weight: 600; word-break: normal; }
 
 .items-table .item-label a::after {

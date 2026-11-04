@@ -4,26 +4,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dictionary items</title>
+  <title>Potentielle ordbogselementer</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <main class="container">
     {{ back_link(url_for('main.index')) }}
-    <h1>Dictionary items</h1>
+    <h1>Potentielle ordbogselementer</h1>
 
     {% if error %}
       <div class="alert alert-error" role="alert">
         <div class="alert-body"><p class="alert-text">{{ error }}</p></div>
       </div>
     {% else %}
-      <p>{{ count }} item(s).</p>
-      <table class="items-table">
+      <p>{{ count }} elementer(s).</p>
+      {% set sprite = url_for('static', filename='dkfds/img/all-svg-icons.svg') %}
+      <table class="items-table" id="sortingTable">
         <thead>
-          <tr><th scope="col">Navn</th><th scope="col">Element</th><th scope="col">Type</th></tr>
+          <tr>
+            <th scope="col" class="table-header-no-wrap" aria-sort="ascending">
+              <button type="button" class="button button-unstyled" id="btn-sort-by-betegnelse" data-sort-index="0">
+                Betegnelse
+                <span class="sr-only">Klik for at sortere faldende</span>
+                <svg class="icon-svg mr-0 ml-2" focusable="false" aria-hidden="true"><use href="{{ sprite }}#sort-table-ascending"></use></svg>
+              </button>
+            </th>
+            <th scope="col">URI</th>
+            <th scope="col" class="table-header-no-wrap">
+              <button type="button" class="button button-unstyled" id="btn-sort-by-type" data-sort-index="2">
+                Type
+                <span class="sr-only">Klik for at sortere stigende</span>
+                <svg class="icon-svg mr-0 ml-2" focusable="false" aria-hidden="true"><use href="{{ sprite }}#sort-table-none"></use></svg>
+              </button>
+            </th>
+          </tr>
         </thead>
-        <tbody>
+        <tbody aria-live="polite">
           {% for card in cards %}
             <tr class="clickable-row">
               <td class="item-label">
@@ -37,7 +54,49 @@
       </table>
     {% endif %}
   </main>
-
   <script src="{{ url_for('static', filename='dkfds/js/dkfds.js') }}"></script>
+  <script>
+    (function () {
+      var table = document.getElementById("sortingTable");
+      if (!table) return;
+      var sprite = "{{ url_for('static', filename='dkfds/img/all-svg-icons.svg') }}";
+      var tbody = table.tBodies[0];
+      var headers = table.querySelectorAll("thead th");
+      var collator = new Intl.Collator("da", { sensitivity: "base", numeric: true });
+
+      function sortBy(th, index, direction) {
+        var rows = Array.prototype.slice.call(tbody.rows);
+        rows.sort(function (a, b) {
+          var result = collator.compare(a.cells[index].textContent.trim(), b.cells[index].textContent.trim());
+          return direction === "ascending" ? result : -result;
+        });
+        rows.forEach(function (row) { tbody.appendChild(row); });
+
+        // A sorted table always has exactly one active sort column.
+        headers.forEach(function (header) {
+          var button = header.querySelector("button");
+          if (!button) return;
+          var active = header === th;
+          var icon = active ? "sort-table-" + direction : "sort-table-none";
+          var next = active && direction === "ascending" ? "faldende" : "stigende";
+          if (active) header.setAttribute("aria-sort", direction);
+          else header.removeAttribute("aria-sort");
+          button.querySelector("use").setAttribute("href", sprite + "#" + icon);
+          button.querySelector(".sr-only").textContent = "Klik for at sortere " + next;
+        });
+      }
+
+      table.querySelectorAll("thead th button").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var th = button.closest("th");
+          var direction = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+          sortBy(th, parseInt(button.dataset.sortIndex, 10), direction);
+        });
+      });
+
+      // Initial state: Betegnelse ascending, matching aria-sort in the markup.
+      sortBy(headers[0], 0, "ascending");
+    })();
+  </script>
 </body>
 </html>
