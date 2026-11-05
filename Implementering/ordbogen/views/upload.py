@@ -6,12 +6,16 @@ from flask import Blueprint, Request, current_app, jsonify, render_template, req
 
 from ..ingest import (
     InvalidNamespace,
+    InvalidPrefix,
     InvalidTurtle,
     VocabularyForm,
+    declared_prefixes,
     detect_ontology,
+    find_prefix,
     ingest_turtle,
     is_safe_iri,
     parse_turtle,
+    preview_items,
     read_vocabulary_metadata,
 )
 from ..models import Term, local_name, prefer_language
@@ -22,6 +26,7 @@ bp = Blueprint("upload", __name__)
 # ids of the inputs that field errors attach to (and the error summary links to)
 TTL_FIELD = "form-fileinput"
 NAMESPACE_FIELD = "ontology"
+PREFIX_FIELD = "prefix"
 DOWNLOAD_URL_FIELD = "download_url"
 PAGE_FIELD = "page"
 
@@ -64,6 +69,8 @@ def index():
                 errors[TTL_FIELD] = str(exc)
             except InvalidNamespace as exc:  # includes AlreadyUploaded
                 errors[NAMESPACE_FIELD] = str(exc)
+            except InvalidPrefix as exc:
+                errors[PREFIX_FIELD] = str(exc)
             except Exception as exc:  # noqa: BLE001 - surface the error in the UI
                 current_app.logger.exception("Vocabulary ingest failed")
                 error = str(exc)
@@ -87,6 +94,7 @@ def index():
         vocabulary=vocabulary if keep_form else VocabularyForm(),
         ttl_field=TTL_FIELD,
         namespace_field=NAMESPACE_FIELD,
+        prefix_field=PREFIX_FIELD,
         download_url_field=DOWNLOAD_URL_FIELD,
         page_field=PAGE_FIELD,
         missing_ttl=MISSING_TTL,
@@ -96,7 +104,7 @@ def index():
 
 @bp.route("/upload/guess", methods=["POST"])
 def guess():
-    """Suggest a namespace, label, description and version for the submitted TTL.
+    """Suggest a namespace, its prefix, label, description and version for the submitted TTL.
 
     The values are read from the file's owl:Ontology. Never writes to the store.
     """
@@ -111,14 +119,59 @@ def guess():
 
     namespace = detect_ontology(graph)
     # Without an owl:Ontology, read the header of the namespace the user typed.
-    header = read_vocabulary_metadata(
-        graph, namespace or request.form.get("ontology", "")
-    )
+    chosen = namespace or request.form.get("ontology", "")
+    header = read_vocabulary_metadata(graph, chosen)
     return jsonify(
         namespace=namespace,
+        prefix=find_prefix(graph, chosen),
         label=_preferred_text(header.labels),
         description=_preferred_text(header.descriptions),
         version=_preferred_text(header.versions),
+    )
+
+
+@bp.route("/upload/prefixes", methods=["POST"])
+def prefixes():
+    ttl_text = _submitted_turtle(request)
+    try:
+        graph = parse_turtle(ttl_text) if ttl_text.strip() else None
+    except InvalidTurtle:
+        graph = None
+    return jsonify(
+        prefixes=[
+            {"prefix": prefix, "uri": uri}
+            for prefix, uri in (declared_prefixes(graph) if graph is not None else [])
+        ]
+    )
+
+
+# The preview table shows at most this many rows, however many items there are.
+PREVIEW_ROWS = 200
+
+
+@bp.route("/upload/preview", methods=["POST"])
+def preview():
+    """The items an upload of the submitted TTL and namespace would create.
+
+    Never reads or writes the store: the items are worked out from the TTL alone.
+    """
+    ttl_text = _submitted_turtle(request)
+    namespace = request.form.get("ontology", "").strip()
+    try:
+        graph = parse_turtle(ttl_text) if ttl_text.strip() else None
+    except InvalidTurtle:
+        graph = None
+    if graph is None or not is_safe_iri(namespace):
+        return jsonify(parsed=graph is not None, total=0, shown=0, html="")
+
+    cards = preview_items(graph, namespace)
+    shown = cards[:PREVIEW_ROWS]
+    return jsonify(
+        parsed=True,
+        total=len(cards),
+        shown=len(shown),
+        # the same table as on /items, as ready-made HTML
+        html=render_template("_upload_preview.html", cards=shown),
     )
 
 
@@ -142,6 +195,7 @@ def _submitted_vocabulary(req: Request) -> VocabularyForm:
         version=req.form.get("version", "").strip(),
         download_url=req.form.get("download_url", "").strip(),
         page=req.form.get("page", "").strip(),
+        prefix=req.form.get("prefix", "").strip(),
     )
 
 

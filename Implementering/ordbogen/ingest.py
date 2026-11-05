@@ -9,7 +9,8 @@ from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, SKOS, FOAF, XSD
 
 from datetime import datetime, timezone
-from .namespaces import MDC, MDV, ADMS
+from .models import ItemCard, Term, prefer_language
+from .namespaces import MDC, MDV, ADMS, VANN
 from .repository import DictionaryRepository
 
 
@@ -49,7 +50,8 @@ class VocabularyForm:
     version: str = ""
     download_url: str = ""
     page: str = ""
-    
+    prefix: str = ""
+
 
 def detect_ontology(graph: Graph) -> str | None:
     """Return the IRI of the first owl:Ontology in the graph, or None."""
@@ -70,6 +72,10 @@ class AlreadyUploaded(InvalidNamespace):
     """The dictionary already has items in the namespace."""
 
 
+class InvalidPrefix(ValueError):
+    """The prefix does not belong to the namespace in the file. The message is shown to the user."""
+
+
 # An absolute IRI with none of the characters SPARQL forbids inside <...>.
 # Text that is put into a query must pass this, so it cannot change the query.
 _SAFE_IRI = re.compile(r'[A-Za-z][A-Za-z0-9+.\-]*:[^\s<>"{}|^`\\]+')
@@ -86,7 +92,8 @@ def parse_turtle(ttl_text: str) -> Graph:
     Raises:
         InvalidTurtle with a user-facing message if the text cannot be parsed.
     """
-    graph = Graph()
+    # "none": only the prefixes the file declares, not rdflib's built-in ones
+    graph = Graph(bind_namespaces="none")
     try:
         graph.parse(data=ttl_text, format="turtle")
     except Exception as exc:  # noqa: BLE001 - rdflib raises several parse error types
@@ -97,6 +104,94 @@ def parse_turtle(ttl_text: str) -> Graph:
             "Ret filen eller teksten, og prøv igen."
         ) from exc
     return graph
+
+
+def declared_prefixes(graph: Graph) -> list[tuple[str, str]]:
+    return sorted((p, str(uri)) for p, uri in graph.namespaces())
+
+
+def find_prefix(graph: Graph, namespace: str) -> str | None:
+    """A prefix the file declares for the namespace, or None.
+
+    The empty prefix (@prefix : <...>) is not a name worth suggesting.
+    """
+    namespace = namespace.strip()
+    matches = sorted(p for p, uri in graph.namespaces() if p and str(uri) == namespace)
+    return matches[0] if matches else None
+
+
+def check_prefix(graph: Graph, namespace: str, prefix: str) -> None:
+    """Raise InvalidPrefix unless the file declares the prefix for the namespace.
+
+    An empty prefix is allowed: it means none was given.
+    """
+    prefix = prefix.strip()
+    if not prefix:
+        return
+    declared = {p: str(uri) for p, uri in graph.namespaces()}
+    if prefix not in declared:
+        raise InvalidPrefix(f"Præfikset {prefix} er ikke deklareret i TTL-filen.")
+    if declared[prefix] != namespace.strip():
+        raise InvalidPrefix(
+            f"Præfikset {prefix} peger på {declared[prefix]} i TTL-filen, "
+            "ikke på det angivne namespace."
+        )
+
+
+# The rdf:types that make a subject a dictionary item, and the item type each
+# gives, as shown in the /items table. Keep in step with the VALUES block in
+# sparql/split_elements.rq, which is what the upload really uses.
+_OWL = "http://www.w3.org/2002/07/owl#"
+_ITEM_TYPE_BY_RDF_TYPE = {
+    _OWL + "Class": "Class",
+    str(RDFS) + "Class": "Class",
+    _OWL + "DeprecatedClass": "Class",
+    str(RDF) + "Property": "Property",
+    _OWL + "ObjectProperty": "Property",
+    _OWL + "DatatypeProperty": "Property",
+    _OWL + "AnnotationProperty": "Property",
+    _OWL + "FunctionalProperty": "Property",
+    _OWL + "InverseFunctionalProperty": "Property",
+    _OWL + "TransitiveProperty": "Property",
+    _OWL + "SymmetricProperty": "Property",
+    _OWL + "DeprecatedProperty": "Property",
+    str(RDFS) + "Datatype": "DataType",
+    str(SKOS) + "Concept": "Concept",
+}
+
+
+def preview_items(graph: Graph, namespace: str) -> list[ItemCard]:
+    """The dictionary items an upload of the graph would create, as /items shows them.
+
+    A preview only: it reads the parsed graph and never touches the store.
+    """
+    namespace = namespace.strip()
+    if not namespace:
+        return []
+
+    types_by_element: dict[URIRef, set[str]] = {}
+    for subject, rdf_type in graph.subject_objects(RDF.type):
+        item_type = _ITEM_TYPE_BY_RDF_TYPE.get(str(rdf_type))
+        if item_type and isinstance(subject, URIRef) and str(subject).startswith(namespace):
+            types_by_element.setdefault(subject, set()).add(item_type)
+
+    cards = []
+    for element, item_types in types_by_element.items():
+        labels = sorted(
+            (Term(str(o), lang=o.language or "")
+             for o in graph.objects(element, RDFS.label) if isinstance(o, Literal)),
+            key=lambda term: term.value,
+        )
+        preferred = prefer_language(labels)
+        cards.append(
+            ItemCard(
+                iri=str(element),
+                vocabulary="",
+                name=preferred[0].value if preferred else "",
+                item_types=sorted(item_types),
+            )
+        )
+    return sorted(cards, key=lambda card: card.label.casefold())
 
 
 def read_vocabulary_metadata(graph: Graph, namespace: str) -> VocabularyHeader:
@@ -147,6 +242,7 @@ def vocabulary_metadata(vocabulary: URIRef, form: VocabularyForm) -> Graph:
     _add_text(g, vocabulary, DCTERMS.description, form.description, lang="en")
     _add_text(g, vocabulary, DCTERMS.description, form.descriptionDa, lang="da")
     _add_text(g, vocabulary, OWL.versionInfo, form.version, lang=None)
+    _add_text(g, vocabulary, VANN.preferredNamespacePrefix, form.prefix, lang=None)
 
     if form.download_url:
         g.add((vocabulary, MDV.downloadURL, Literal(form.download_url, datatype=XSD.anyURI)))
@@ -176,6 +272,8 @@ def ingest_turtle(
         )
 
     local = parse_turtle(ttl_text)
+    form = form or VocabularyForm()
+    check_prefix(local, ontology, form.prefix)
 
     # Re-uploads are not supported yet
     if repository.has_items_in_namespace(ontology):
@@ -185,7 +283,7 @@ def ingest_turtle(
         )
 
     graph_uri = repository.new_graph_iri()
-    metadata = vocabulary_metadata(URIRef(graph_uri), form or VocabularyForm())
+    metadata = vocabulary_metadata(URIRef(graph_uri), form)
     repository.ingest_vocabulary(graph_uri, local, metadata, ontology)
 
     return IngestResult(

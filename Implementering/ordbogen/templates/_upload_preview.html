@@ -1,0 +1,3 @@
+{# The rows of the preview on /upload, sent to the page as an HTML fragment. #}
+{% from "_items_table.html" import items_table %}
+{{ items_table(cards, "preview-table", describedby="preview-hint") }}

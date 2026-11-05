@@ -3,6 +3,7 @@
 {% from "_form_error.html" import form_error_message %}
 {% set ttl_error = errors.get(ttl_field) %}
 {% set namespace_error = errors.get(namespace_field) %}
+{% set prefix_error = errors.get(prefix_field) %}
 {% set download_url_error = errors.get(download_url_field) %}
 {% set page_error = errors.get(page_field) %}
 <!doctype html>
@@ -85,6 +86,37 @@
         </div>
         <p class="form-hint" id="ontology-status" role="status" aria-live="polite"></p>
       </div>
+
+      <div class="form-group{% if prefix_error %} form-error{% endif %}">
+        <label class="form-label" for="{{ prefix_field }}">Prefix</label>
+        <span class="form-hint" id="prefix-hint">
+          Valgfrit. Udfyldes med det præfiks, filen giver namespace, fx <code>foaf</code>.
+          Hvis du angiver et præfiks, skal TTL-filen deklarere det for netop dette
+          namespace.
+        </span>
+        {% if prefix_error %}{{ form_error_message(prefix_field, prefix_error) }}{% endif %}
+        <input type="text" class="form-input" id="{{ prefix_field }}" name="prefix"
+               value="{{ vocabulary.prefix }}"
+               {% if prefix_error %}aria-invalid="true"{% endif %}
+               aria-describedby="prefix-hint{% if prefix_error %} {{ prefix_field }}-error{% endif %}"
+               placeholder="foaf">
+      </div>
+
+      {# Filled by the script as soon as a file is chosen or TTL is pasted. #}
+      <div class="form-group" id="prefix-table-group" hidden
+           data-prefixes-url="{{ url_for('upload.prefixes') }}">
+        <h2 class="h3" id="prefix-table-heading">Vokabularer filen bruger</h2>
+        <span class="form-hint" id="prefix-table-hint">
+          De præfikser TTL-filen deklarerer, med deres namespace-URI.
+        </span>
+        <table class="prefix-table" aria-labelledby="prefix-table-heading"
+               aria-describedby="prefix-table-hint">
+          <thead>
+            <tr><th scope="col">Præfiks</th><th scope="col">Namespace-URI</th></tr>
+          </thead>
+          <tbody id="prefix-table-body"></tbody>
+        </table>
+      </div>
       </div>
 
       <div class="upload-column">
@@ -158,6 +190,20 @@
       </p>
       <button type="submit" class="button button-primary">Fuldfør upload</button>
     </form>
+
+    {# Preview of what Fuldfør upload would add to Potentielle ordbogselementer.
+       Worked out from the TTL alone; nothing is read from or written to the store. #}
+    <section id="preview-section" aria-labelledby="preview-heading" hidden
+             data-preview-url="{{ url_for('upload.preview') }}">
+      <h2 class="h3" id="preview-heading">Forhåndsvisning af ordbogselementer</h2>
+      <p class="form-hint" id="preview-hint">
+        Sådan vil elementerne se ud under <em>Potentielle ordbogselementer</em>, hvis du
+        trykker <em>Fuldfør upload</em>. Intet er gemt endnu.
+      </p>
+      <p id="preview-count" role="status" aria-live="polite"></p>
+      {# the table itself comes from the server, built like the one on /items #}
+      <div id="preview-table-holder"></div>
+    </section>
   </main>
 
   <script src="{{ url_for('static', filename='dkfds/js/dkfds.js') }}"></script>
@@ -171,8 +217,9 @@
       var fileInput = form.elements["file"];
       var textInput = form.elements["ttl_text"];
       var namespaceInput = form.elements["ontology"];
+      var prefixInput = form.elements["prefix"];
       var status = document.getElementById("ontology-status");
-      var fields = [fileInput, namespaceInput]; // in form order
+      var fields = [fileInput, namespaceInput, prefixInput]; // in form order
 
       // --- field errors (https://designsystem.dk/komponenter/fejlmeddelelser/) ---
       // The error message element is the source of truth, so errors rendered
@@ -251,6 +298,113 @@
       textInput.addEventListener("input", function () { fixed(fileInput, hasTurtle); });
       namespaceInput.addEventListener("input", function () { fixed(namespaceInput, hasNamespace); });
 
+      // Whether the prefix belongs to the namespace is checked on the server,
+      // against the file, when the form is submitted. A changed prefix or
+      // namespace makes an earlier prefix error out of date.
+      function clearPrefixError() { if (errorElement(prefixInput)) { clearFieldError(prefixInput); } }
+      prefixInput.addEventListener("input", clearPrefixError);
+      namespaceInput.addEventListener("input", clearPrefixError);
+
+      // The submitted TTL as the server reads it: an uploaded file wins over
+      // pasted text.
+      function ttlFormData() {
+        var data = new FormData();
+        var file = fileInput.files[0];
+        if (file) { data.append("file", file); }
+        data.append("ttl_text", textInput.value);
+        data.append("ontology", namespaceInput.value);
+        return data;
+      }
+
+      // --- table of the prefixes the TTL declares, updated as the TTL changes ---
+
+      var prefixGroup = document.getElementById("prefix-table-group");
+      var prefixBody = document.getElementById("prefix-table-body");
+      var prefixRequest = 0; // only the newest request may update the table
+      var prefixTimer = null;
+
+      function showPrefixes(prefixes) {
+        prefixBody.textContent = "";
+        prefixes.forEach(function (entry) {
+          var row = prefixBody.insertRow();
+          var prefixCell = row.insertCell();
+          prefixCell.textContent = entry.prefix || "(standard)";
+          row.insertCell().textContent = entry.uri;
+        });
+        prefixGroup.hidden = prefixes.length === 0;
+      }
+
+      function refreshPrefixes() {
+        var request = ++prefixRequest;
+        if (!hasTurtle()) { showPrefixes([]); return; }
+        fetch(prefixGroup.dataset.prefixesUrl, { method: "POST", body: ttlFormData() })
+          .then(function (response) { return response.json(); })
+          .then(function (body) {
+            if (request === prefixRequest) { showPrefixes(body.prefixes); }
+          })
+          .catch(function () {
+            if (request === prefixRequest) { showPrefixes([]); }
+          });
+      }
+
+      function refreshPrefixesSoon() {
+        clearTimeout(prefixTimer);
+        prefixTimer = setTimeout(refreshPrefixes, 400); // wait while typing
+      }
+
+      // --- preview of the items the upload would create ---
+
+      var previewSection = document.getElementById("preview-section");
+      var previewCount = document.getElementById("preview-count");
+      var previewHolder = document.getElementById("preview-table-holder");
+      var previewRequest = 0;
+      var previewTimer = null;
+
+      // tableHtml is the server's own, escaped markup, so it is safe to insert.
+      function showPreview(message, tableHtml) {
+        previewCount.textContent = message;
+        previewHolder.innerHTML = tableHtml || "";
+        previewSection.hidden = message === "";
+      }
+
+      function refreshPreview() {
+        var request = ++previewRequest;
+        if (!hasTurtle()) { showPreview(""); return; }
+        if (!hasNamespace()) {
+          showPreview("Angiv et namespace for at se, hvilke ordbogselementer der oprettes.");
+          return;
+        }
+        fetch(previewSection.dataset.previewUrl, { method: "POST", body: ttlFormData() })
+          .then(function (response) { return response.json(); })
+          .then(function (body) {
+            if (request !== previewRequest) { return; }
+            if (!body.parsed) { showPreview(""); return; } // the error shows on submit
+            if (body.total === 0) {
+              showPreview("Der oprettes ingen ordbogselementer. Tjek at namespace passer til filen.");
+              return;
+            }
+            var message = body.total + " elementer(s).";
+            if (body.shown < body.total) {
+              message += " Viser de første " + body.shown + ".";
+            }
+            showPreview(message, body.html);
+          })
+          .catch(function () {
+            if (request === previewRequest) { showPreview(""); }
+          });
+      }
+
+      function refreshPreviewSoon() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(refreshPreview, 400); // wait while typing
+      }
+
+      fileInput.addEventListener("change", function () { refreshPrefixes(); refreshPreview(); });
+      textInput.addEventListener("input", function () { refreshPrefixesSoon(); refreshPreviewSoon(); });
+      namespaceInput.addEventListener("input", refreshPreviewSoon);
+      refreshPrefixes(); // pasted text kept after a failed submit
+      refreshPreview();
+
       // --- "Gæt namespace": the guess endpoint only parses; nothing is stored
       // until the form itself is submitted. ---
 
@@ -275,11 +429,7 @@
           return;
         }
 
-        var data = new FormData();
-        var file = fileInput.files[0];
-        if (file) { data.append("file", file); }
-        data.append("ttl_text", textInput.value);
-        data.append("ontology", namespaceInput.value);
+        var data = ttlFormData();
 
         guessButton.disabled = true;
         status.textContent = "Gætter namespace…";
@@ -307,6 +457,19 @@
               status.textContent = "Kunne ikke finde en owl:Ontology. " +
                 "Angiv namespace manuelt.";
             }
+            // The prefix goes with the namespace: a found one replaces what is
+            // there, and a new namespace without one empties the field.
+            if (reply.body.prefix) {
+              prefixInput.value = reply.body.prefix;
+              clearPrefixError();
+            } else if (reply.body.namespace) {
+              prefixInput.value = "";
+              clearPrefixError();
+            }
+            refreshPreview(); // the namespace may have changed
+            status.textContent += reply.body.prefix
+              ? " Præfikset " + reply.body.prefix + " er fundet i filen."
+              : " Filen deklarerer intet præfiks for dette namespace.";
             if (fillEmpty(reply.body)) {
               status.textContent += " Tomme felter under Om vokabularet er udfyldt fra filen.";
             }

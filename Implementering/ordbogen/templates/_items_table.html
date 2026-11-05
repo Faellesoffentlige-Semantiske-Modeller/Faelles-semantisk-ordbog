@@ -1,0 +1,46 @@
+{# The table of dictionary items: Betegnelse, URI, Type.
+
+   Used by /items (interactive: sortable headers, each row links to the item)
+   and by the preview on /upload (plain: nothing to click). The sorting script
+   is in items.html and finds the table by its id. #}
+{% macro items_table(cards, table_id, interactive=False, describedby="") -%}
+{% set sprite = url_for('static', filename='dkfds/img/all-svg-icons.svg') -%}
+<table class="items-table" id="{{ table_id }}"{% if describedby %} aria-describedby="{{ describedby }}"{% endif %}>
+  <thead>
+    <tr>
+      {% if interactive %}
+      <th scope="col" class="table-header-no-wrap" aria-sort="ascending">
+        <button type="button" class="button button-unstyled" id="btn-sort-by-betegnelse" data-sort-index="0">
+          Betegnelse
+          <span class="sr-only">Klik for at sortere faldende</span>
+          <svg class="icon-svg mr-0 ml-2" focusable="false" aria-hidden="true"><use href="{{ sprite }}#sort-table-ascending"></use></svg>
+        </button>
+      </th>
+      <th scope="col">URI</th>
+      <th scope="col" class="table-header-no-wrap">
+        <button type="button" class="button button-unstyled" id="btn-sort-by-type" data-sort-index="2">
+          Type
+          <span class="sr-only">Klik for at sortere stigende</span>
+          <svg class="icon-svg mr-0 ml-2" focusable="false" aria-hidden="true"><use href="{{ sprite }}#sort-table-none"></use></svg>
+        </button>
+      </th>
+      {% else %}
+      <th scope="col">Betegnelse</th>
+      <th scope="col">URI</th>
+      <th scope="col">Type</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody{% if interactive %} aria-live="polite"{% endif %}>
+    {% for card in cards %}
+      <tr{% if interactive %} class="clickable-row"{% endif %}>
+        <td class="item-label">
+          {% if interactive %}<a href="{{ url_for('items.detail', iri=card.iri) }}">{{ card.label }}</a>{% else %}{{ card.label }}{% endif %}
+        </td>
+        <td>{{ card.iri }}</td>
+        <td>{{ card.item_types|join(", ") }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{%- endmacro %}

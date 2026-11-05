@@ -103,6 +103,12 @@ tbody tr:nth-child(even) { background: #f7f9fb; }
   padding: calc(8px - 2px) calc(16px - 2px);
 }
 
+.prefix-table { font-size: 1.6rem; margin-top: 8px; }
+
+.prefix-table th, .prefix-table td { padding: 0.6rem 1.2rem; }
+
+.prefix-table th { position: static; }
+
 /* /items: whole row is clickable via a link stretched over the row */
 .items-table .clickable-row { position: relative; cursor: pointer; }
 

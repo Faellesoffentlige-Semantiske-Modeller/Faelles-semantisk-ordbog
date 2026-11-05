@@ -1,7 +1,8 @@
+{# A link to the page one level up, given as href. It is a plain link, not the
+   browser's history: after a form post the history holds the form again. #}
 {% macro back_link(href) %}
 <div>
-  <a href="{{ href }}" class="back-link"
-     onclick="if (history.length > 1) { history.back(); return false; } return true;">
+  <a href="{{ href }}" class="back-link">
     <svg class="icon-svg" focusable="false" aria-hidden="true">
       <use href="{{ url_for('static', filename='dkfds/img/all-svg-icons.svg') }}#chevron-left"></use>
     </svg>Tilbage
