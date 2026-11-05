@@ -26,12 +26,27 @@ def index():
     """Grid of cards, one per dictionary item, each linking to its detail page."""
     error = None
     cards = []
+    vocabulary_uri = request.args.get("uri", "").strip()
+    # The IRI is put into query text, so anything else is treated as not found.
+    if vocabulary_uri and not is_safe_iri(vocabulary_uri):
+        abort(404)
+    vocabulary_title = ""
     try:
-        cards = current_repository().list_items()
+        repository = current_repository()
+        cards = repository.list_items(vocabulary_uri)
+        if vocabulary_uri:
+            vocabulary = repository.get_vocabulary(vocabulary_uri)
+            vocabulary_title = vocabulary.title if vocabulary else ""
     except Exception as exc:  # noqa: BLE001 - surface the error in the UI
         current_app.logger.exception("Could not list the dictionary items")
         error = str(exc)
-    return render_template("items.html", cards=cards, count=len(cards), error=error)
+    return render_template(
+        "items.html",
+        cards=cards,
+        count=len(cards),
+        error=error,
+        vocabulary_title=vocabulary_title,
+    )
 
 
 # The item IRI is the element IRI (e.g. http://xmlns.com/foaf/0.1/Person). It is

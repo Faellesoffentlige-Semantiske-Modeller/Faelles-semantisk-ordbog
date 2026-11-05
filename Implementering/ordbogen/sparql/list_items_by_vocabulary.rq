@@ -1,14 +1,14 @@
 PREFIX mdv:  <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-# All dictionary items (default graph) with the element they represent, the
-# vocabulary they come from, and the element's rdfs:label(s) from its defining
-# graph. An item repeats once per label (one per language); one row per item
+# All dictionary items (default graph) from a specific vocabulary 
+# with the element they represent, and the element's rdfs:label(s) from its defininggraph. 
+# An item repeats once per label (one per language); one row per item
 # when it has none. The repository picks the preferred language.
-SELECT ?item ?vocabulary ?itemType ?label
+SELECT ?item ?itemType ?label
 WHERE {
   ?item a mdv:DictionaryItem ;
-        rdfs:isDefinedBy  ?vocabulary ;
+        rdfs:isDefinedBy  <$vocabulary> ;
         mdv:definingGraph ?definingGraph .
   OPTIONAL { ?item mdv:itemType ?itemType }
   OPTIONAL { GRAPH ?definingGraph { ?item rdfs:label ?label } }

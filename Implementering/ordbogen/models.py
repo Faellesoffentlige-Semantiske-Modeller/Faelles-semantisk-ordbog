@@ -88,7 +88,7 @@ class VocabularyCard:
 
     @property
     def title(self) -> str:
-        return self.label_da or self.label_en or local_name(self.iri)
+        return self.label_da or self.label_en
 
     @property
     def description(self) -> str:

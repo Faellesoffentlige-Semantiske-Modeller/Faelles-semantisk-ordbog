@@ -12,7 +12,7 @@
 <body>
   <main class="container">
     {{ back_link(url_for('main.index')) }}
-    <h1>Potentielle ordbogselementer</h1>
+    <h1>Potentielle ordbogselementer{% if vocabulary_title %} fra {{ vocabulary_title }}{% endif %}</h1>
 
     {% if error %}
       <div class="alert alert-error" role="alert">

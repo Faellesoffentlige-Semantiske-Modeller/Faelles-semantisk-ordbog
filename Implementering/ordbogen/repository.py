@@ -72,11 +72,15 @@ class DictionaryRepository:
 
     # --- reads ---------------------------------------------------------
 
-    def list_items(self) -> list[ItemCard]:
-        """All dictionary items."""
+    def list_items(self, vocabulary_uri: str) -> list[ItemCard]:
+        """The dictionary items of one vocabulary; none if no vocabulary is given."""
+        if not vocabulary_uri:
+            return []
         # An item comes back once per rdfs:label (one per language) and item type.
         rows_by_item: dict[str, list] = {}
-        for row in self.reader.query(load_sparql("list_items.rq")):
+        for row in self.reader.query(
+            load_sparql("list_items_by_vocabulary.rq", vocabulary=vocabulary_uri)
+        ):
             rows_by_item.setdefault(str(row.item), []).append(row)
 
         cards = []
@@ -86,7 +90,7 @@ class DictionaryRepository:
             cards.append(
                 ItemCard(
                     iri=item_iri,
-                    vocabulary=str(rows[0].vocabulary),
+                    vocabulary=vocabulary_uri,
                     name=preferred[0].value if preferred else "",
                     item_types=_item_type_names(rows),
                 )
@@ -114,6 +118,13 @@ class DictionaryRepository:
             for iri, rows in rows_by_vocabulary.items()
         ]
         return sorted(cards, key=lambda card: card.title.casefold())
+
+    def get_vocabulary(self, vocabulary_uri: str) -> VocabularyCard | None:
+        """The card of one vocabulary, or None if it is not in the dictionary."""
+        for card in self.list_vocabularies():
+            if card.iri == vocabulary_uri:
+                return card
+        return None
 
     def get_item(self, item_iri: str) -> DictionaryItem | None:
         """Return one dictionary item described for display, or None."""
