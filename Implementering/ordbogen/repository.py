@@ -19,6 +19,7 @@ from .models import (
     ItemCard,
     LABEL_PREDICATE,
     Term,
+    VocabularyCard,
     build_facts,
     local_name,
     prefer_language,
@@ -91,6 +92,28 @@ class DictionaryRepository:
                 )
             )
         return sorted(cards, key=lambda card: card.label.casefold())
+
+    def list_vocabularies(self) -> list[VocabularyCard]:
+        """All semantic assets (vocabularies) with their labels and descriptions."""
+        rows_by_vocabulary: dict[str, list] = {}
+        for row in self.reader.query(load_sparql("get_semantic_assets.rq")):
+            rows_by_vocabulary.setdefault(str(row.vocabulary), []).append(row)
+
+        def first(rows, column: str) -> str:
+            values = _distinct(rows, column)
+            return str(values[0]) if values else ""
+
+        cards = [
+            VocabularyCard(
+                iri=iri,
+                label_da=first(rows, "labelDa"),
+                label_en=first(rows, "labelEn"),
+                description_da=first(rows, "descDa"),
+                description_en=first(rows, "descEn"),
+            )
+            for iri, rows in rows_by_vocabulary.items()
+        ]
+        return sorted(cards, key=lambda card: card.title.casefold())
 
     def get_item(self, item_iri: str) -> DictionaryItem | None:
         """Return one dictionary item described for display, or None."""

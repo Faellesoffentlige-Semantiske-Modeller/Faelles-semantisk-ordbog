@@ -76,6 +76,25 @@ class ItemCard:
         return self.name or local_name(self.iri)
 
 
+@dataclass
+class VocabularyCard:
+    """One mdv:SemanticAsset as shown in the /vocabularies grid."""
+
+    iri: str
+    label_da: str = ""
+    label_en: str = ""
+    description_da: str = ""
+    description_en: str = ""
+
+    @property
+    def title(self) -> str:
+        return self.label_da or self.label_en or local_name(self.iri)
+
+    @property
+    def description(self) -> str:
+        return self.description_da or self.description_en
+
+
 # --- the "Om elementet" facts shown on an item page ---------------------
 #
 # Only predicates a non-technical reader cares about are shown, under a Danish

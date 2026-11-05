@@ -18,11 +18,12 @@ def create_app(config: Config | None = None) -> Flask:
     app = Flask(__name__)
     app.config["ORDBOGEN"] = config or Config.from_env()
 
-    from .views import items, main, upload, visualize
+    from .views import items, main, upload, visualize, vocabularies
 
     app.register_blueprint(main.bp)
     app.register_blueprint(items.bp)
     app.register_blueprint(upload.bp)
     app.register_blueprint(visualize.bp)
+    app.register_blueprint(vocabularies.bp)
 
     return app

@@ -1,0 +1,22 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?vocabulary ?descEn ?labelEn ?descDa ?labelDa WHERE {
+  ?vocabulary a <https://data.gov.dk/model/core/metadata-dictionary-vocabulary/SemanticAsset>.
+  OPTIONAL {
+    ?vocabulary dcterms:description ?descEn .
+    	FILTER (langMatches(lang(?descEn), "en"))
+  }
+    OPTIONAL {
+    ?vocabulary dcterms:description ?descDa .
+    	FILTER (langMatches(lang(?descDa), "da"))
+  }
+    OPTIONAL {
+    ?vocabulary rdfs:label ?labelEn .
+        FILTER (langMatches(lang(?labelEn), "en"))
+  }
+    OPTIONAL {
+    ?vocabulary rdfs:label ?labelDa .
+        FILTER (langMatches(lang(?labelDa), "da"))
+  }
+} ORDER BY ?vocabulary

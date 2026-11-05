@@ -1,0 +1,41 @@
+{% from "_back.html" import back_link %}
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vokabularer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    {{ back_link(url_for('main.index')) }}
+    <h1>Vokabularer</h1>
+
+    {% if error %}
+      <div class="alert alert-error" role="alert">
+        <div class="alert-body"><p class="alert-text">{{ error }}</p></div>
+      </div>
+    {% else %}
+      <p>{{ count }} vokabular(er).</p>
+      <div class="row card-row vocabulary-cards">
+        {% for card in cards %}
+          <div class="col-12 col-md-6 col-lg-4">
+            <section class="card vocabulary-card">
+              <div class="card-content">
+                <span class="card-subheading">{{ card.label_en if card.label_da and card.label_en != card.label_da else "" }}</span>
+                <h2 class="card-heading">
+                  <a href="{{ url_for('items.index') }}">{{ card.title }}</a>
+                </h2>
+                {% if card.description %}<p>{{ card.description }}</p>{% endif %}
+                <p class="vocabulary-iri"><code>{{ card.iri }}</code></p>
+              </div>
+            </section>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>
