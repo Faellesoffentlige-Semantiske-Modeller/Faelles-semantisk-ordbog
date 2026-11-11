@@ -147,16 +147,27 @@ tbody tr:nth-child(even) { background: #f7f9fb; }
   word-break: normal;
 }
 
-/* /vocabularies: whole card is clickable via a link stretched over the card */
-.vocabulary-cards .vocabulary-card { position: relative; cursor: pointer; height: 100%; }
+.vocabulary-cards .vocabulary-card,
+.nav-cards .nav-card { position: relative; cursor: pointer; height: 100%; }
 
 .vocabulary-cards .vocabulary-card:hover,
-.vocabulary-cards .vocabulary-card:focus-within { background: #e3edf7; }
+.vocabulary-cards .vocabulary-card:focus-within,
+.nav-cards .nav-card:hover,
+.nav-cards .nav-card:focus-within { background: #e3edf7; }
 
-.vocabulary-cards .card-heading a::after {
+.vocabulary-cards .card-heading a::after,
+.nav-cards .card-heading a::after {
   content: "";
   position: absolute;
   inset: 0;
 }
+
+body.has-footer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.has-footer > main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
 
 .vocabulary-cards .vocabulary-iri { font-size: 1.4rem; word-break: break-all; color: var(--muted); }

@@ -3,18 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Metadataordbog UI</title>
+  <title>Metadataordbog</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dkfds/css/dkfds.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-  <main>
+<body class="has-footer">
+  <main class="container">
     <h1>Metadataordbog</h1>
-    <p>Simpel UI til Fuseki-datasettet <code>Metadataordbog</code>.</p>
-    <p class="endpoint">Endpoint: <code>{{ endpoint }}</code></p>
-    <ul class="nav">
-      <li><a href="{{ url_for('upload.index') }}">Upload TTL til ny named graph → /upload</a></li>
-      <li><a href="{{ url_for('vocabularies.index') }}">Alle Vokabularer i ordbogen → /vocabularies</a></li>
-    </ul>
+
+    <div class="row card-row nav-cards">
+      <div class="col-12 col-md-6">
+        <section class="card nav-card">
+          <div class="card-content">
+            <span class="card-subheading">Upload</span>
+            <h2 class="card-heading">
+              <a href="{{ url_for('upload.index') }}">Upload TTL</a>
+            </h2>
+            <p>Upload en TTL-fil som en ny named graph i ordbogen.</p>
+          </div>
+        </section>
+      </div>
+      <div class="col-12 col-md-6">
+        <section class="card nav-card">
+          <div class="card-content">
+            <span class="card-subheading">Overblik</span>
+            <h2 class="card-heading">
+              <a href="{{ url_for('vocabularies.index') }}">Vokabularer</a>
+            </h2>
+            <p>Se alle vokabularer i ordbogen.</p>
+          </div>
+        </section>
+      </div>
+    </div>
   </main>
+  {% include "_footer.html" %}
 </body>
 </html>
